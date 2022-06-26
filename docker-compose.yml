@@ -1,0 +1,5 @@
+services:
+  rust:
+    container_name: rust_lox
+    image: rust:latest
+    tty: true
