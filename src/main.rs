@@ -7,7 +7,8 @@ use std::{
 mod error;
 mod scanner;
 mod token;
-
+#[macro_use]
+extern crate lazy_static;
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() > 2 {
