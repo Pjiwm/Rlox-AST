@@ -73,4 +73,5 @@ pub enum TokenType {
 pub enum DataType {
     String(String),
     Number(f64),
+    Boolean(bool),
 }
