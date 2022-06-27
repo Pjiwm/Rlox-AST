@@ -59,14 +59,32 @@ impl Scanner {
             '>' => self.pick_and_add_token(TokenType::Greaterequal, TokenType::Greater, '='),
             '"' => self.string(),
             '/' => {
+                // This is for single line comments
                 if self.matches('/') {
                     while self.peek() != '\n' && !self.is_at_end() {
                         self.advance();
                     }
+                // This is for multi line comments
+                } else if self.matches('*') {
+                    while !self.is_at_end() {
+                        self.advance();
+                        // A multiline comment ends with a * followed by a /
+                        // This is why peek_next() is needed. If these conditions are met advance has to be called 2x.
+                        // This is because the lexer otherwise tokenizes * and /.
+                        if self.peek() == '*' && self.peek_next() == '/' {
+                            // The if statement is needed, if it was the end of the file advancing further
+                            // would make it go out of bounds for the source.
+                            if !self.is_at_end() {
+                                self.advance();
+                                self.advance();
+                            }
+                            break;
+                        }
+                    }
                 } else {
                     self.add_token(TokenType::Slash);
                 }
-            }
+            } /* */
             // Ignore whitespace
             ' ' | '\r' | '\t' => (),
             // Indicates a new line, so the line in the struct should advance as well.
