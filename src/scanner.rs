@@ -70,7 +70,14 @@ impl Scanner {
             ' ' | '\r' | '\t' => (),
             // Indicates a new line, so the line in the struct should advance as well.
             '\n' => self.line += 1,
-            _ => error::error(self.line, "Unexpected character."),
+            // Default case
+            _ => {
+                if self.is_digit(c) {
+                    self.number();
+                } else {
+                    error::error(self.line, "Unexpected character.")
+                }
+            }
         }
     }
 
@@ -91,7 +98,27 @@ impl Scanner {
             .source
             .substring(self.start + 1, self.current - 1)
             .to_string();
-        self.add_token_helper(TokenType::String, Some(DataType::String(value)));
+        self.add_token_advanced(TokenType::String, Some(DataType::String(value)));
+    }
+
+    /// Scans a number literal.
+    fn number(&mut self) {
+        while self.is_digit(self.peek()) {
+            self.advance();
+        }
+        // Look for fractional part - requires to peek 2 characters ahead.
+        if self.peek() == '.' && self.is_digit(self.peek_next()) {
+            // Consume the "."
+            self.advance();
+            while self.is_digit(self.peek()) {
+                self.advance();
+            }
+        }
+        // Grab the substring containing just the number.
+        let value = self.source.substring(self.start, self.current).to_string();
+        // Wrap and convert it to the right datatype.
+        let value = Some(DataType::Number(value.parse::<f64>().unwrap()));
+        self.add_token_advanced(TokenType::Number, value);
     }
 
     fn is_at_end(&self) -> bool {
@@ -104,7 +131,7 @@ impl Scanner {
     }
     /// Adds a new token to the tokens vector.
     fn add_token(&mut self, token_type: TokenType) {
-        self.add_token_helper(token_type, None);
+        self.add_token_advanced(token_type, None);
     }
 
     /// Gives back the correct token type for a lexeme.
@@ -117,7 +144,7 @@ impl Scanner {
         }
     }
 
-    fn add_token_helper(&mut self, token_type: TokenType, literal: Option<DataType>) {
+    fn add_token_advanced(&mut self, token_type: TokenType, literal: Option<DataType>) {
         let text = self.source.substring(self.start, self.current).to_string();
         self.tokens
             .push(Token::new(token_type, text, literal, self.line));
@@ -140,5 +167,17 @@ impl Scanner {
             return '\0';
         }
         self.source.chars().nth(self.current).unwrap()
+    }
+
+    fn peek_next(&self) -> char {
+        if self.current + 1 >= self.source.len() {
+            return '\0';
+        }
+        self.source.chars().nth(self.current + 1).unwrap()
+    }
+
+    /// Checks if value is digit
+    fn is_digit(&self, c: char) -> bool {
+        c.is_ascii_digit()
     }
 }
