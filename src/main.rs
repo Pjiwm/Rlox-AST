@@ -53,7 +53,7 @@ fn run_prompt() -> io::Result<()> {
 }
 
 fn run(source: &str) -> io::Result<()> {
-    let mut token_scanner = scanner::Scanner::<i32>::new(source.replace("\n", ""));
+    let mut token_scanner = scanner::Scanner::new(source.replace("\n", ""));
     let tokens = token_scanner.scan_tokens();
     for token in tokens {
         println!("{:?}", token);

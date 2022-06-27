@@ -1,16 +1,16 @@
 use core::fmt::Debug;
-#[derive(Clone, Debug)] 
-pub struct Token<T: Debug> {
+#[derive(Debug)]
+pub struct Token {
     token_type: TokenType,
     lexeme: String,
-    literal: Option<T>,
+    literal: Option<DataType>,
     line: u32,
 }
-impl<T: Debug> Token<T> {
-    pub fn new(token_type: TokenType, lexeme: String, literal: Option<T>, line: u32) -> Self {
+impl Token {
+    pub fn new(token_type: TokenType, lexeme: String, literal: Option<DataType>, line: u32) -> Self {
         Token {
             token_type,
-            lexeme,  
+            lexeme,
             literal,
             line,
         }
@@ -67,4 +67,10 @@ pub enum TokenType {
     Var,
     While,
     Eof,
+}
+
+#[derive(Debug)]
+pub enum DataType {
+    String(String),
+    Number(f64),
 }
