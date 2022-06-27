@@ -2,7 +2,7 @@ use std::any::Any;
 
 use crate::{
     error,
-    token::{Token, TokenType, DataType},
+    token::{DataType, Token, TokenType},
 };
 use substring::Substring;
 
@@ -74,6 +74,26 @@ impl Scanner {
         }
     }
 
+    /// Scans a string literal.
+    fn string(&mut self) {
+        while self.peek() != '"' && !self.is_at_end() {
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
+            self.advance();
+        }
+        if self.is_at_end() {
+            error::error(self.line, "Unterminated string.");
+            return;
+        }
+        self.advance();
+        let value = self
+            .source
+            .substring(self.start + 1, self.current - 1)
+            .to_string();
+        self.add_token_helper(TokenType::String, Some(DataType::String(value)));
+    }
+
     fn is_at_end(&self) -> bool {
         self.current >= self.source.len()
     }
@@ -85,6 +105,16 @@ impl Scanner {
     /// Adds a new token to the tokens vector.
     fn add_token(&mut self, token_type: TokenType) {
         self.add_token_helper(token_type, None);
+    }
+
+    /// Gives back the correct token type for a lexeme.
+    /// Used only for lexemes which are potentially two characters long.
+    fn pick_and_add_token(&mut self, token_match: TokenType, token_mismatch: TokenType, c: char) {
+        if self.matches(c) {
+            self.add_token(token_match);
+        } else {
+            self.add_token(token_mismatch);
+        }
     }
 
     fn add_token_helper(&mut self, token_type: TokenType, literal: Option<DataType>) {
@@ -104,37 +134,11 @@ impl Scanner {
         true
     }
 
-    fn pick_and_add_token(&mut self, token_match: TokenType, token_mismatch: TokenType, c: char) {
-        if self.matches(c) {
-            self.add_token(token_match);
-        } else {
-            self.add_token(token_mismatch);
-        }
-    }
     /// Peeks the upcoming character without advancing the current index.
     fn peek(&self) -> char {
         if self.is_at_end() {
             return '\0';
         }
         self.source.chars().nth(self.current).unwrap()
-    }
-
-    fn string(&mut self) {
-        while self.peek() != '"' && !self.is_at_end() {
-            if self.peek() == '\n' {
-                self.line += 1;
-            }
-            self.advance();
-        }
-        if self.is_at_end() {
-            error::error(self.line, "Unterminated string.");
-            return;
-        }
-        self.advance();
-        let value = self
-            .source
-            .substring(self.start + 1, self.current - 1)
-            .to_string();
-        self.add_token_helper(TokenType::String, Some(DataType::String(value)));
     }
 }
