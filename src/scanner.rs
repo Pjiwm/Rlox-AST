@@ -4,7 +4,7 @@ use crate::{
 };
 use std::collections::HashMap;
 use substring::Substring;
-// pub static KEYWORDS: Box<HashMap<String, TokenType>> = get_keywords();
+
 pub struct Scanner {
     source: String,
     tokens: Vec<Token>,
@@ -61,23 +61,20 @@ impl Scanner {
             '/' => {
                 // This is for single line comments
                 if self.matches('/') {
-                    while self.peek() != '\n' && !self.is_at_end() {
+                    while (self.peek() != '\n') && !self.is_at_end() {
+                        println!("New line: {}", self.peek() == '\n');
                         self.advance();
                     }
                 // This is for multi line comments
                 } else if self.matches('*') {
                     while !self.is_at_end() {
+                        // Matching with new lines is important to keep the line property up-to-date.
+                        if self.matches('\n') {
+                            self.line += 1;
+                        }
                         self.advance();
-                        // A multiline comment ends with a * followed by a /
-                        // This is why peek_next() is needed. If these conditions are met advance has to be called 2x.
-                        // This is because the lexer otherwise tokenizes * and /.
-                        if self.peek() == '*' && self.peek_next() == '/' {
-                            // The if statement is needed, if it was the end of the file advancing further
-                            // would make it go out of bounds for the source.
-                            if !self.is_at_end() {
-                                self.advance();
-                                self.advance();
-                            }
+                        // A multiline comment always ends with a */, so we can check for that.
+                        if self.matches('/') {
                             break;
                         }
                     }
