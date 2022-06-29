@@ -7,6 +7,7 @@ use std::{
 mod error;
 mod scanner;
 mod token;
+mod expr;
 #[macro_use]
 extern crate lazy_static;
 
