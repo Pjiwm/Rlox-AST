@@ -7,19 +7,18 @@ pub struct Token {
     line: u32,
 }
 impl Token {
-    pub fn new(token_type: TokenType, lexeme: String, literal: Option<DataType>, line: u32) -> Self {
+    pub fn new(
+        token_type: TokenType,
+        lexeme: String,
+        literal: Option<DataType>,
+        line: u32,
+    ) -> Self {
         Token {
             token_type,
             lexeme,
             literal,
             line,
         }
-    }
-    pub fn print(&self) -> String {
-        format!(
-            "type: {}, lexeme: {}, literal: {:?}",
-            self.token_type, self.lexeme, self.literal
-        )
     }
 }
 #[derive(strum_macros::Display, Clone, Debug)]
@@ -73,5 +72,4 @@ pub enum TokenType {
 pub enum DataType {
     String(String),
     Number(f64),
-    Boolean(bool),
 }
