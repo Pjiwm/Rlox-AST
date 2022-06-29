@@ -1,12 +1,12 @@
 use crate::token::{DataType, Token};
 
 pub trait Expr {
-    fn accept<R>(&self, visitor: &mut dyn Visitor<R>) -> R
+    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R
     where
         Self: Sized;
 }
 
-pub trait Visitor<R> {
+pub trait ExprVisitor<R> {
     fn visit_assign_expr(&mut self, expr: &Assign) -> R;
     fn visit_binary_expr(&mut self, expr: &Binary) -> R;
     fn visit_call_expr(&mut self, expr: &Call) -> R;
@@ -31,7 +31,7 @@ impl Assign {
     }
 }
 impl Expr for Assign {
-    fn accept<R>(&self, visitor: &mut dyn Visitor<R>) -> R {
+    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_assign_expr(self)
     }
 }
@@ -51,7 +51,7 @@ impl Binary {
     }
 }
 impl Expr for Binary {
-    fn accept<R>(&self, visitor: &mut dyn Visitor<R>) -> R {
+    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_binary_expr(self)
     }
 }
@@ -71,7 +71,7 @@ impl Call {
     }
 }
 impl Expr for Call {
-    fn accept<R>(&self, visitor: &mut dyn Visitor<R>) -> R {
+    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_call_expr(self)
     }
 }
@@ -86,7 +86,7 @@ impl Get {
     }
 }
 impl Expr for Get {
-    fn accept<R>(&self, visitor: &mut dyn Visitor<R>) -> R {
+    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_get_expr(self)
     }
 }
@@ -100,7 +100,7 @@ impl Grouping {
     }
 }
 impl Expr for Grouping {
-    fn accept<R>(&self, visitor: &mut dyn Visitor<R>) -> R {
+    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_grouping_expr(self)
     }
 }
@@ -114,7 +114,7 @@ impl Literal {
     }
 }
 impl Expr for Literal {
-    fn accept<R>(&self, visitor: &mut dyn Visitor<R>) -> R {
+    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_literal_expr(self)
     }
 }
@@ -134,7 +134,7 @@ impl Logical {
     }
 }
 impl Expr for Logical {
-    fn accept<R>(&self, visitor: &mut dyn Visitor<R>) -> R {
+    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_logical_expr(self)
     }
 }
@@ -154,7 +154,7 @@ impl Set {
     }
 }
 impl Expr for Set {
-    fn accept<R>(&self, visitor: &mut dyn Visitor<R>) -> R {
+    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_set_expr(self)
     }
 }
@@ -169,7 +169,7 @@ impl Super {
     }
 }
 impl Expr for Super {
-    fn accept<R>(&self, visitor: &mut dyn Visitor<R>) -> R {
+    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_super_expr(self)
     }
 }
@@ -183,7 +183,7 @@ impl This {
     }
 }
 impl Expr for This {
-    fn accept<R>(&self, visitor: &mut dyn Visitor<R>) -> R {
+    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_this_expr(self)
     }
 }
@@ -198,7 +198,7 @@ impl Unary {
     }
 }
 impl Expr for Unary {
-    fn accept<R>(&self, visitor: &mut dyn Visitor<R>) -> R {
+    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_unary_expr(self)
     }
 }
@@ -212,7 +212,179 @@ impl Variable {
     }
 }
 impl Expr for Variable {
-    fn accept<R>(&self, visitor: &mut dyn Visitor<R>) -> R {
+    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_variable_expr(self)
+    }
+}
+
+pub trait Stmt {
+    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R
+    where
+        Self: Sized;
+}
+
+pub trait StmtVisitor<R> {
+    fn visit_block_stmt(&mut self, stmt: &Block) -> R;
+    fn visit_class_stmt(&mut self, stmt: &Class) -> R;
+    fn visit_expression_stmt(&mut self, stmt: &Expression) -> R;
+    fn visit_function_stmt(&mut self, stmt: &Function) -> R;
+    fn visit_if_stmt(&mut self, stmt: &If) -> R;
+    fn visit_print_stmt(&mut self, stmt: &Print) -> R;
+    fn visit_return_stmt(&mut self, stmt: &Return) -> R;
+    fn visit_var_stmt(&mut self, stmt: &Var) -> R;
+    fn visit_while_stmt(&mut self, stmt: &While) -> R;
+}
+
+pub struct Block {
+    statements: Vec<Box<dyn Stmt>>,
+}
+impl Block {
+    pub fn new(statements: Vec<Box<dyn Stmt>>) -> Self {
+        Self { statements }
+    }
+}
+impl Stmt for Block {
+    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+        visitor.visit_block_stmt(self)
+    }
+}
+
+pub struct Class {
+    name: Token,
+    // Check if these works, cause they might not...
+    methods: Vec<Box<Function>>,
+    super_class: Option<Box<Variable>>,
+}
+impl Class {
+    pub fn new(
+        name: Token,
+        methods: Vec<Box<Function>>,
+        super_class: Option<Box<Variable>>,
+    ) -> Self {
+        Self {
+            name,
+            methods,
+            super_class,
+        }
+    }
+}
+impl Stmt for Class {
+    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+        visitor.visit_class_stmt(self)
+    }
+}
+
+pub struct Expression {
+    expression: Box<dyn Expr>,
+}
+impl Expression {
+    pub fn new(expression: Box<dyn Expr>) -> Self {
+        Self { expression }
+    }
+}
+impl Stmt for Expression {
+    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+        visitor.visit_expression_stmt(self)
+    }
+}
+
+pub struct Function {
+    name: Token,
+    param: Vec<Token>,
+    body: Box<dyn Stmt>,
+}
+impl Function {
+    pub fn new(name: Token, param: Vec<Token>, body: Box<dyn Stmt>) -> Self {
+        Self { name, param, body }
+    }
+}
+impl Stmt for Function {
+    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+        visitor.visit_function_stmt(self)
+    }
+}
+
+pub struct If {
+    condition: Box<dyn Expr>,
+    then_branch: Box<dyn Stmt>,
+    else_branch: Option<Box<dyn Stmt>>,
+}
+impl If {
+    pub fn new(
+        condition: Box<dyn Expr>,
+        then_branch: Box<dyn Stmt>,
+        else_branch: Option<Box<dyn Stmt>>,
+    ) -> Self {
+        Self {
+            condition,
+            then_branch,
+            else_branch,
+        }
+    }
+}
+impl Stmt for If {
+    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+        visitor.visit_if_stmt(self)
+    }
+}
+
+pub struct Print {
+    expression: Box<dyn Expr>,
+}
+impl Print {
+    pub fn new(expression: Box<dyn Expr>) -> Self {
+        Self { expression }
+    }
+}
+impl Stmt for Print {
+    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+        visitor.visit_print_stmt(self)
+    }
+}
+
+pub struct Return {
+    keyword: Token,
+    // TODO For later: Find out if option is really needed?
+    value: Option<Box<dyn Expr>>,
+}
+
+impl Return {
+    pub fn new(keyword: Token, value: Option<Box<dyn Expr>>) -> Self {
+        Self { keyword, value }
+    }
+}
+impl Stmt for Return {
+    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+        visitor.visit_return_stmt(self)
+    }
+}
+
+pub struct Var {
+    name: Token,
+    initializer: Option<Box<dyn Expr>>,
+}
+impl Var {
+    pub fn new(name: Token, initializer: Option<Box<dyn Expr>>) -> Self {
+        Self { name, initializer }
+    }
+}
+impl Stmt for Var {
+    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+        visitor.visit_var_stmt(self)
+    }
+}
+
+pub struct While {
+    condition: Box<dyn Expr>,
+    body: Box<dyn Stmt>,
+}
+impl While {
+    pub fn new(condition: Box<dyn Expr>, body: Box<dyn Stmt>) -> Self {
+        Self { condition, body }
+    }
+}
+impl Stmt for While {
+    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+        visitor.visit_while_stmt(self)
     }
 }
