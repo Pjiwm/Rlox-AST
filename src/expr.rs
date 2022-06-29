@@ -37,9 +37,9 @@ impl Expr for Assign {
 }
 
 pub struct Binary {
-    left: Box<dyn Expr>,
-    operator: Token,
-    right: Box<dyn Expr>,
+    pub left: Box<dyn Expr>,
+    pub operator: Token,
+    pub right: Box<dyn Expr>,
 }
 impl Binary {
     pub fn new(left: Box<dyn Expr>, operator: Token, right: Box<dyn Expr>) -> Self {

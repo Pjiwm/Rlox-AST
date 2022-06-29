@@ -4,10 +4,14 @@ use std::{
     io::{self, BufReader, Read, Write},
     process, str,
 };
+
+use expr::{Binary, Grouping, Literal, Unary};
+use token::{DataType, Token, TokenType};
+mod ast_printer;
 mod error;
+mod expr;
 mod scanner;
 mod token;
-mod expr;
 #[macro_use]
 extern crate lazy_static;
 
@@ -59,4 +63,20 @@ fn run(source: &str) -> io::Result<()> {
         println!("{:?}", token);
     }
     Ok(())
+}
+
+fn demo_ast() {
+    let mut expression = Binary::new(
+        Box::new(Unary::new(
+            Token::new(TokenType::Minus, "-".to_string(), None, 1),
+            Box::new(Literal::new(DataType::Number(123.0))),
+        )),
+        Token::new(TokenType::Star, "*".to_string(), None, 1),
+        Box::new(Grouping::new(Box::new(Literal::new(DataType::Number(
+            45.67,
+        ))))),
+    );
+    let printer = ast_printer::AstPrinter::new();
+    let expression_str  = printer.print::<Binary>(&expression);
+    // println!("{}", expression);
 }
