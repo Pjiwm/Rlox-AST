@@ -1,12 +1,12 @@
 use crate::token::{DataType, Token};
 
-trait Expr {
+pub trait Expr {
     fn accept<R>(&self, visitor: &mut dyn Visitor<R>) -> R
     where
         Self: Sized;
 }
 
-trait Visitor<R> {
+pub trait Visitor<R> {
     fn visit_assign_expr(&mut self, expr: &Assign) -> R;
     fn visit_binary_expr(&mut self, expr: &Binary) -> R;
     fn visit_call_expr(&mut self, expr: &Call) -> R;
@@ -21,12 +21,12 @@ trait Visitor<R> {
     fn visit_variable_expr(&mut self, expr: &Variable) -> R;
 }
 
-struct Assign {
+pub struct Assign {
     name: String,
     value: Box<dyn Expr>,
 }
 impl Assign {
-    fn new(name: String, value: Box<dyn Expr>) -> Self {
+    pub fn new(name: String, value: Box<dyn Expr>) -> Self {
         Self { name, value }
     }
 }
@@ -36,13 +36,13 @@ impl Expr for Assign {
     }
 }
 
-struct Binary {
+pub struct Binary {
     left: Box<dyn Expr>,
     operator: Token,
     right: Box<dyn Expr>,
 }
 impl Binary {
-    fn new(left: Box<dyn Expr>, operator: Token, right: Box<dyn Expr>) -> Self {
+    pub fn new(left: Box<dyn Expr>, operator: Token, right: Box<dyn Expr>) -> Self {
         Self {
             left,
             operator,
@@ -56,13 +56,13 @@ impl Expr for Binary {
     }
 }
 
-struct Call {
+pub struct Call {
     callee: Box<dyn Expr>,
     paren: Token,
     arguments: Vec<Box<dyn Expr>>,
 }
 impl Call {
-    fn new(callee: Box<dyn Expr>, paren: Token, arguments: Vec<Box<dyn Expr>>) -> Self {
+    pub fn new(callee: Box<dyn Expr>, paren: Token, arguments: Vec<Box<dyn Expr>>) -> Self {
         Self {
             callee,
             paren,
@@ -76,12 +76,12 @@ impl Expr for Call {
     }
 }
 
-struct Get {
+pub struct Get {
     object: Box<dyn Expr>,
     name: Token,
 }
 impl Get {
-    fn new(object: Box<dyn Expr>, name: Token) -> Self {
+    pub fn new(object: Box<dyn Expr>, name: Token) -> Self {
         Self { object, name }
     }
 }
@@ -91,11 +91,11 @@ impl Expr for Get {
     }
 }
 
-struct Grouping {
+pub struct Grouping {
     expression: Box<dyn Expr>,
 }
 impl Grouping {
-    fn new(expression: Box<dyn Expr>) -> Self {
+    pub fn new(expression: Box<dyn Expr>) -> Self {
         Self { expression }
     }
 }
@@ -105,11 +105,11 @@ impl Expr for Grouping {
     }
 }
 
-struct Literal {
+pub struct Literal {
     value: DataType,
 }
 impl Literal {
-    fn new(value: DataType) -> Self {
+    pub fn new(value: DataType) -> Self {
         Self { value }
     }
 }
@@ -119,13 +119,13 @@ impl Expr for Literal {
     }
 }
 
-struct Logical {
+pub struct Logical {
     left: Box<dyn Expr>,
     operator: Token,
     right: Box<dyn Expr>,
 }
 impl Logical {
-    fn new(left: Box<dyn Expr>, operator: Token, right: Box<dyn Expr>) -> Self {
+    pub fn new(left: Box<dyn Expr>, operator: Token, right: Box<dyn Expr>) -> Self {
         Self {
             left,
             operator,
@@ -139,13 +139,13 @@ impl Expr for Logical {
     }
 }
 
-struct Set {
+pub struct Set {
     object: Box<dyn Expr>,
     name: Token,
     value: Box<dyn Expr>,
 }
 impl Set {
-    fn new(object: Box<dyn Expr>, name: Token, value: Box<dyn Expr>) -> Self {
+    pub fn new(object: Box<dyn Expr>, name: Token, value: Box<dyn Expr>) -> Self {
         Self {
             object,
             name,
@@ -159,12 +159,12 @@ impl Expr for Set {
     }
 }
 
-struct Super {
+pub struct Super {
     keyword: Token,
     method: Token,
 }
 impl Super {
-    fn new(keyword: Token, method: Token) -> Self {
+    pub fn new(keyword: Token, method: Token) -> Self {
         Self { keyword, method }
     }
 }
@@ -174,11 +174,11 @@ impl Expr for Super {
     }
 }
 
-struct This {
+pub struct This {
     keyword: Token,
 }
 impl This {
-    fn new(keyword: Token) -> Self {
+    pub fn new(keyword: Token) -> Self {
         Self { keyword }
     }
 }
@@ -188,12 +188,12 @@ impl Expr for This {
     }
 }
 
-struct Unary {
+pub struct Unary {
     operator: Token,
     right: Box<dyn Expr>,
 }
 impl Unary {
-    fn new(operator: Token, right: Box<dyn Expr>) -> Self {
+    pub fn new(operator: Token, right: Box<dyn Expr>) -> Self {
         Self { operator, right }
     }
 }
@@ -203,11 +203,11 @@ impl Expr for Unary {
     }
 }
 
-struct Variable {
+pub struct Variable {
     name: Token,
 }
 impl Variable {
-    fn new(name: Token) -> Self {
+    pub fn new(name: Token) -> Self {
         Self { name }
     }
 }
