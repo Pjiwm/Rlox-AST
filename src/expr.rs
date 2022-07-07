@@ -1,33 +1,25 @@
 use crate::token::{DataType, Token};
 
 pub trait Expr {
-    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R
-    where
-        Self: Sized;
+    fn accept(&self, visitor: &mut dyn ExprVisitor) -> ReturnTypes;
+}
+pub enum ReturnTypes {
+    String(String),
 }
 
-impl<'a> Expr for &'a dyn Expr {
-    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R 
-    where
-    &'a dyn Expr: Sized {
-        (*self).accept(visitor)
-    }
-}
-
-
-pub trait ExprVisitor<R> {
-    fn visit_assign_expr(&mut self, expr: &Assign) -> R;
-    fn visit_binary_expr(&mut self, expr: &mut Binary) -> R;
-    fn visit_call_expr(&mut self, expr: &Call) -> R;
-    fn visit_get_expr(&mut self, expr: &Get) -> R;
-    fn visit_grouping_expr(&mut self, expr: &Grouping) -> R;
-    fn visit_literal_expr(&mut self, expr: &Literal) -> R;
-    fn visit_logical_expr(&mut self, expr: &Logical) -> R;
-    fn visit_set_expr(&mut self, expr: &Set) -> R;
-    fn visit_super_expr(&mut self, expr: &Super) -> R;
-    fn visit_this_expr(&mut self, expr: &This) -> R;
-    fn visit_unary_expr(&mut self, expr: &Unary) -> R;
-    fn visit_variable_expr(&mut self, expr: &Variable) -> R;
+pub trait ExprVisitor {
+    fn visit_assign_expr(&mut self, expr: &Assign) -> ReturnTypes;
+    fn visit_binary_expr(&mut self, expr: &Binary) -> ReturnTypes;
+    fn visit_call_expr(&mut self, expr: &Call) -> ReturnTypes;
+    fn visit_get_expr(&mut self, expr: &Get) -> ReturnTypes;
+    fn visit_grouping_expr(&mut self, expr: &Grouping) -> ReturnTypes;
+    fn visit_literal_expr(&mut self, expr: &Literal) -> ReturnTypes;
+    fn visit_logical_expr(&mut self, expr: &Logical) -> ReturnTypes;
+    fn visit_set_expr(&mut self, expr: &Set) -> ReturnTypes;
+    fn visit_super_expr(&mut self, expr: &Super) -> ReturnTypes;
+    fn visit_this_expr(&mut self, expr: &This) -> ReturnTypes;
+    fn visit_unary_expr(&mut self, expr: &Unary) -> ReturnTypes;
+    fn visit_variable_expr(&mut self, expr: &Variable) -> ReturnTypes;
 }
 
 pub struct Assign {
@@ -40,7 +32,7 @@ impl Assign {
     }
 }
 impl Expr for Assign {
-    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept(&self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_assign_expr(self)
     }
 }
@@ -60,7 +52,7 @@ impl Binary {
     }
 }
 impl Expr for Binary {
-    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept(&self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_binary_expr(self)
     }
 }
@@ -80,7 +72,7 @@ impl Call {
     }
 }
 impl Expr for Call {
-    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_call_expr(self)
     }
 }
@@ -95,7 +87,7 @@ impl Get {
     }
 }
 impl Expr for Get {
-    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_get_expr(self)
     }
 }
@@ -109,7 +101,7 @@ impl Grouping {
     }
 }
 impl Expr for Grouping {
-    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_grouping_expr(self)
     }
 }
@@ -123,7 +115,7 @@ impl Literal {
     }
 }
 impl Expr for Literal {
-    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_literal_expr(self)
     }
 }
@@ -143,7 +135,7 @@ impl Logical {
     }
 }
 impl Expr for Logical {
-    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_logical_expr(self)
     }
 }
@@ -163,7 +155,7 @@ impl Set {
     }
 }
 impl Expr for Set {
-    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_set_expr(self)
     }
 }
@@ -178,7 +170,7 @@ impl Super {
     }
 }
 impl Expr for Super {
-    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_super_expr(self)
     }
 }
@@ -192,7 +184,7 @@ impl This {
     }
 }
 impl Expr for This {
-    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_this_expr(self)
     }
 }
@@ -207,7 +199,7 @@ impl Unary {
     }
 }
 impl Expr for Unary {
-    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_unary_expr(self)
     }
 }
@@ -221,27 +213,27 @@ impl Variable {
     }
 }
 impl Expr for Variable {
-    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_variable_expr(self)
     }
 }
 
 pub trait Stmt {
-    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R
+    fn accept(&self, visitor: &mut dyn StmtVisitor) -> ReturnTypes
     where
         Self: Sized;
 }
 
-pub trait StmtVisitor<R> {
-    fn visit_block_stmt(&mut self, stmt: &Block) -> R;
-    fn visit_class_stmt(&mut self, stmt: &Class) -> R;
-    fn visit_expression_stmt(&mut self, stmt: &Expression) -> R;
-    fn visit_function_stmt(&mut self, stmt: &Function) -> R;
-    fn visit_if_stmt(&mut self, stmt: &If) -> R;
-    fn visit_print_stmt(&mut self, stmt: &Print) -> R;
-    fn visit_return_stmt(&mut self, stmt: &Return) -> R;
-    fn visit_var_stmt(&mut self, stmt: &Var) -> R;
-    fn visit_while_stmt(&mut self, stmt: &While) -> R;
+pub trait StmtVisitor {
+    fn visit_block_stmt(&mut self, stmt: &Block) -> ReturnTypes;
+    fn visit_class_stmt(&mut self, stmt: &Class) -> ReturnTypes;
+    fn visit_expression_stmt(&mut self, stmt: &Expression) -> ReturnTypes;
+    fn visit_function_stmt(&mut self, stmt: &Function) -> ReturnTypes;
+    fn visit_if_stmt(&mut self, stmt: &If) -> ReturnTypes;
+    fn visit_print_stmt(&mut self, stmt: &Print) -> ReturnTypes;
+    fn visit_return_stmt(&mut self, stmt: &Return) -> ReturnTypes;
+    fn visit_var_stmt(&mut self, stmt: &Var) -> ReturnTypes;
+    fn visit_while_stmt(&mut self, stmt: &While) -> ReturnTypes;
 }
 
 pub struct Block {
@@ -253,7 +245,7 @@ impl Block {
     }
 }
 impl Stmt for Block {
-    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+    fn accept(&self, visitor: &mut dyn StmtVisitor) -> ReturnTypes {
         visitor.visit_block_stmt(self)
     }
 }
@@ -278,7 +270,7 @@ impl Class {
     }
 }
 impl Stmt for Class {
-    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+    fn accept(&self, visitor: &mut dyn StmtVisitor) -> ReturnTypes {
         visitor.visit_class_stmt(self)
     }
 }
@@ -292,7 +284,7 @@ impl Expression {
     }
 }
 impl Stmt for Expression {
-    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+    fn accept(&self, visitor: &mut dyn StmtVisitor) -> ReturnTypes {
         visitor.visit_expression_stmt(self)
     }
 }
@@ -308,7 +300,7 @@ impl Function {
     }
 }
 impl Stmt for Function {
-    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+    fn accept(&self, visitor: &mut dyn StmtVisitor) -> ReturnTypes {
         visitor.visit_function_stmt(self)
     }
 }
@@ -332,7 +324,7 @@ impl If {
     }
 }
 impl Stmt for If {
-    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+    fn accept(&self, visitor: &mut dyn StmtVisitor) -> ReturnTypes {
         visitor.visit_if_stmt(self)
     }
 }
@@ -346,7 +338,7 @@ impl Print {
     }
 }
 impl Stmt for Print {
-    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+    fn accept(&self, visitor: &mut dyn StmtVisitor) -> ReturnTypes {
         visitor.visit_print_stmt(self)
     }
 }
@@ -363,7 +355,7 @@ impl Return {
     }
 }
 impl Stmt for Return {
-    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+    fn accept(&self, visitor: &mut dyn StmtVisitor) -> ReturnTypes {
         visitor.visit_return_stmt(self)
     }
 }
@@ -378,7 +370,7 @@ impl Var {
     }
 }
 impl Stmt for Var {
-    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+    fn accept(&self, visitor: &mut dyn StmtVisitor) -> ReturnTypes {
         visitor.visit_var_stmt(self)
     }
 }
@@ -393,7 +385,7 @@ impl While {
     }
 }
 impl Stmt for While {
-    fn accept<R>(&self, visitor: &mut dyn StmtVisitor<R>) -> R {
+    fn accept(&self, visitor: &mut dyn StmtVisitor) -> ReturnTypes {
         visitor.visit_while_stmt(self)
     }
 }

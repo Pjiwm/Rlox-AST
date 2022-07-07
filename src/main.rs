@@ -1,5 +1,3 @@
-#![allow(incomplete_features)]
-#![feature(unsized_locals, unsized_fn_params)]
 use std::{
     env,
     io::{self, Write},
