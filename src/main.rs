@@ -1,7 +1,8 @@
+#![allow(incomplete_features)]
+#![feature(unsized_locals, unsized_fn_params)]
 use std::{
     env,
-    fs::File,
-    io::{self, BufReader, Read, Write},
+    io::{self, Write},
     process, str,
 };
 
@@ -14,8 +15,10 @@ mod scanner;
 mod token;
 #[macro_use]
 extern crate lazy_static;
+extern crate dyn_safe;
 
 fn main() {
+    demo_ast();
     let args: Vec<String> = env::args().collect();
     if args.len() > 2 {
         println!("Usage: jlox [script]");
@@ -76,7 +79,8 @@ fn demo_ast() {
             45.67,
         ))))),
     );
-    let printer = ast_printer::AstPrinter::new();
-    let expression_str  = printer.print::<Binary>(&expression);
-    // println!("{}", expression);
+    let expression = &mut expression;
+    let mut printer = ast_printer::AstPrinter::new();
+    let expression_str  = printer.print::<Binary>(expression);
+    println!("{}", expression_str);
 }

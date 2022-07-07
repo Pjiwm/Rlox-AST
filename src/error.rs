@@ -1,5 +1,4 @@
-/// TODO Change this stuff to a an enum or struct.
-static mut had_error: bool = false;
+static mut HAD_ERROR: bool = false;
 pub fn error(line: u32, message: &str) {
     report(line, "", message);
 }
@@ -14,10 +13,10 @@ fn report(line: u32, location: &str, message: &str) {
 
 pub fn set_error(error: bool) {
     unsafe {
-        had_error = error;
+        HAD_ERROR = error;
     }
 }
 
 pub fn get_error() -> bool {
-    unsafe { had_error }
+    unsafe { HAD_ERROR }
 }

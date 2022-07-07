@@ -1,14 +1,23 @@
 use crate::token::{DataType, Token};
 
 pub trait Expr {
-    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R
+    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R
     where
         Self: Sized;
 }
 
+impl<'a> Expr for &'a dyn Expr {
+    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R 
+    where
+    &'a dyn Expr: Sized {
+        (*self).accept(visitor)
+    }
+}
+
+
 pub trait ExprVisitor<R> {
     fn visit_assign_expr(&mut self, expr: &Assign) -> R;
-    fn visit_binary_expr(&mut self, expr: &Binary) -> R;
+    fn visit_binary_expr(&mut self, expr: &mut Binary) -> R;
     fn visit_call_expr(&mut self, expr: &Call) -> R;
     fn visit_get_expr(&mut self, expr: &Get) -> R;
     fn visit_grouping_expr(&mut self, expr: &Grouping) -> R;
@@ -31,7 +40,7 @@ impl Assign {
     }
 }
 impl Expr for Assign {
-    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_assign_expr(self)
     }
 }
@@ -51,7 +60,7 @@ impl Binary {
     }
 }
 impl Expr for Binary {
-    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_binary_expr(self)
     }
 }
@@ -71,7 +80,7 @@ impl Call {
     }
 }
 impl Expr for Call {
-    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_call_expr(self)
     }
 }
@@ -86,13 +95,13 @@ impl Get {
     }
 }
 impl Expr for Get {
-    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_get_expr(self)
     }
 }
 
 pub struct Grouping {
-    expression: Box<dyn Expr>,
+    pub expression: Box<dyn Expr>,
 }
 impl Grouping {
     pub fn new(expression: Box<dyn Expr>) -> Self {
@@ -100,21 +109,21 @@ impl Grouping {
     }
 }
 impl Expr for Grouping {
-    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_grouping_expr(self)
     }
 }
 
 pub struct Literal {
-    value: DataType,
+    pub value: Option<DataType>,
 }
 impl Literal {
     pub fn new(value: DataType) -> Self {
-        Self { value }
+        Self { value: Some(value) }
     }
 }
 impl Expr for Literal {
-    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_literal_expr(self)
     }
 }
@@ -134,7 +143,7 @@ impl Logical {
     }
 }
 impl Expr for Logical {
-    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_logical_expr(self)
     }
 }
@@ -154,7 +163,7 @@ impl Set {
     }
 }
 impl Expr for Set {
-    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_set_expr(self)
     }
 }
@@ -169,7 +178,7 @@ impl Super {
     }
 }
 impl Expr for Super {
-    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_super_expr(self)
     }
 }
@@ -183,14 +192,14 @@ impl This {
     }
 }
 impl Expr for This {
-    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_this_expr(self)
     }
 }
 
 pub struct Unary {
-    operator: Token,
-    right: Box<dyn Expr>,
+    pub operator: Token,
+    pub right: Box<dyn Expr>,
 }
 impl Unary {
     pub fn new(operator: Token, right: Box<dyn Expr>) -> Self {
@@ -198,7 +207,7 @@ impl Unary {
     }
 }
 impl Expr for Unary {
-    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_unary_expr(self)
     }
 }
@@ -212,7 +221,7 @@ impl Variable {
     }
 }
 impl Expr for Variable {
-    fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
+    fn accept<R>(&mut self, visitor: &mut dyn ExprVisitor<R>) -> R {
         visitor.visit_variable_expr(self)
     }
 }
