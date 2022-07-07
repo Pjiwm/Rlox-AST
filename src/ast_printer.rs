@@ -1,4 +1,4 @@
-use crate::{expr::{Binary, Expr, ExprVisitor, ReturnTypes}, token::DataType};
+use crate::{expr::*, token::DataType};
 
 pub struct AstPrinter;
 impl AstPrinter {
@@ -10,46 +10,50 @@ impl AstPrinter {
         let return_string = match expr.accept(self) {
             ReturnTypes::String(s) => s,
         };
-        return_string 
+        return_string
     }
 
-    fn paranthesize(&mut self, name: &String, exprs: Vec<&dyn Expr>) -> String {
+    fn paranthesize(&mut self, name: &String, exprs: Vec<&dyn Expr>) -> ReturnTypes {
         let mut s = String::new();
         s.push_str("(");
         s.push_str(name);
         for expr in exprs {
             s.push_str(" ");
-            let expr_str = match  expr.accept(self) {
+            let expr_str = match expr.accept(self) {
                 ReturnTypes::String(s) => s,
-                _ => "Invalid Expression".to_string(),
             };
             s.push_str(expr_str.as_str());
         }
         s.push_str(")");
-        s
+        ReturnTypes::String(s)
     }
 }
 
 impl ExprVisitor for AstPrinter {
     fn visit_binary_expr(&mut self, expr: &Binary) -> ReturnTypes {
         let expressions = vec![expr.left.as_ref(), expr.right.as_ref()];
-        ReturnTypes::String(self.paranthesize(&expr.operator.lexeme, expressions))
+        self.paranthesize(&expr.operator.lexeme, expressions)
     }
 
-    fn visit_call_expr(&mut self, expr: &crate::expr::Call) -> ReturnTypes {
-        todo!()
+    fn visit_call_expr(&mut self, expr: &Call) -> ReturnTypes {
+        let mut expressions = vec![expr.callee.as_ref()];
+        for arg in &expr.arguments {
+            expressions.push(arg.as_ref());
+        }
+        self.paranthesize(&expr.paren.lexeme, expressions)
     }
 
-    fn visit_get_expr(&mut self, expr: &crate::expr::Get) -> ReturnTypes {
-        todo!()
+    fn visit_get_expr(&mut self, expr: &Get) -> ReturnTypes {
+        let expressions = vec![expr.object.as_ref()];
+        self.paranthesize(&expr.name.lexeme, expressions)
     }
 
-    fn visit_grouping_expr(&mut self, expr: &crate::expr::Grouping) -> ReturnTypes {
+    fn visit_grouping_expr(&mut self, expr: &Grouping) -> ReturnTypes {
         let expressions = vec![expr.expression.as_ref()];
-        ReturnTypes::String(self.paranthesize(&"group".to_owned(), expressions))
+        self.paranthesize(&"group".to_owned(), expressions)
     }
 
-    fn visit_literal_expr(&mut self, expr: &crate::expr::Literal) -> ReturnTypes {
+    fn visit_literal_expr(&mut self, expr: &Literal) -> ReturnTypes {
         if expr.value.is_none() {
             ReturnTypes::String("nil".to_owned())
         } else {
@@ -60,32 +64,35 @@ impl ExprVisitor for AstPrinter {
         }
     }
 
-    fn visit_logical_expr(&mut self, expr: &crate::expr::Logical) -> ReturnTypes {
-        todo!()
+    fn visit_logical_expr(&mut self, expr: &Logical) -> ReturnTypes {
+        let expressions = vec![expr.left.as_ref(), expr.right.as_ref()];
+        self.paranthesize(&expr.operator.lexeme, expressions)
     }
 
-    fn visit_set_expr(&mut self, expr: &crate::expr::Set) -> ReturnTypes {
-        todo!()
+    fn visit_set_expr(&mut self, expr: &Set) -> ReturnTypes {
+        let expressions = vec![expr.object.as_ref(), expr.value.as_ref()];
+        self.paranthesize(&expr.name.lexeme, expressions)
     }
 
-    fn visit_super_expr(&mut self, expr: &crate::expr::Super) -> ReturnTypes {
-        todo!()
+    fn visit_super_expr(&mut self, _expr: &Super) -> ReturnTypes {
+        ReturnTypes::String("super".to_owned())
     }
 
-    fn visit_this_expr(&mut self, expr: &crate::expr::This) -> ReturnTypes {
-        todo!()
+    fn visit_this_expr(&mut self, _expr: &This) -> ReturnTypes {
+        ReturnTypes::String("this".to_owned())
     }
 
-    fn visit_unary_expr(&mut self, expr: &crate::expr::Unary) -> ReturnTypes {
+    fn visit_unary_expr(&mut self, expr: &Unary) -> ReturnTypes {
         let expresssions = vec![expr.right.as_ref()];
-        ReturnTypes::String(self.paranthesize(&expr.operator.lexeme, expresssions))
+        self.paranthesize(&expr.operator.lexeme, expresssions)
     }
 
-    fn visit_variable_expr(&mut self, expr: &crate::expr::Variable) -> ReturnTypes {
-        todo!()
+    fn visit_variable_expr(&mut self, expr: &Variable) -> ReturnTypes {
+        ReturnTypes::String(expr.name.lexeme.clone())
     }
 
-    fn visit_assign_expr(&mut self, expr: &crate::expr::Assign) -> ReturnTypes {
-        todo!()
+    fn visit_assign_expr(&mut self, expr: &Assign) -> ReturnTypes {
+        let expressions = vec![expr.value.as_ref()];
+        self.paranthesize(&expr.name, expressions)
     }
 }

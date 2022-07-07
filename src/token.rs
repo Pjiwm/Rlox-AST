@@ -1,5 +1,5 @@
 use core::fmt::Debug;
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     token_type: TokenType,
     pub lexeme: String,
@@ -68,7 +68,7 @@ pub enum TokenType {
     Eof,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum DataType {
     String(String),
     Number(f64),

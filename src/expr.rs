@@ -23,8 +23,8 @@ pub trait ExprVisitor {
 }
 
 pub struct Assign {
-    name: String,
-    value: Box<dyn Expr>,
+    pub name: String,
+    pub value: Box<dyn Expr>,
 }
 impl Assign {
     pub fn new(name: String, value: Box<dyn Expr>) -> Self {
@@ -58,9 +58,9 @@ impl Expr for Binary {
 }
 
 pub struct Call {
-    callee: Box<dyn Expr>,
-    paren: Token,
-    arguments: Vec<Box<dyn Expr>>,
+    pub callee: Box<dyn Expr>,
+    pub paren: Token,
+    pub arguments: Vec<Box<dyn Expr>>,
 }
 impl Call {
     pub fn new(callee: Box<dyn Expr>, paren: Token, arguments: Vec<Box<dyn Expr>>) -> Self {
@@ -72,14 +72,14 @@ impl Call {
     }
 }
 impl Expr for Call {
-    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
+    fn accept(&self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_call_expr(self)
     }
 }
 
 pub struct Get {
-    object: Box<dyn Expr>,
-    name: Token,
+    pub object: Box<dyn Expr>,
+    pub name: Token,
 }
 impl Get {
     pub fn new(object: Box<dyn Expr>, name: Token) -> Self {
@@ -87,7 +87,7 @@ impl Get {
     }
 }
 impl Expr for Get {
-    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
+    fn accept(&self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_get_expr(self)
     }
 }
@@ -101,7 +101,7 @@ impl Grouping {
     }
 }
 impl Expr for Grouping {
-    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
+    fn accept(&self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_grouping_expr(self)
     }
 }
@@ -115,15 +115,15 @@ impl Literal {
     }
 }
 impl Expr for Literal {
-    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
+    fn accept(&self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_literal_expr(self)
     }
 }
 
 pub struct Logical {
-    left: Box<dyn Expr>,
-    operator: Token,
-    right: Box<dyn Expr>,
+    pub left: Box<dyn Expr>,
+    pub operator: Token,
+    pub right: Box<dyn Expr>,
 }
 impl Logical {
     pub fn new(left: Box<dyn Expr>, operator: Token, right: Box<dyn Expr>) -> Self {
@@ -135,15 +135,15 @@ impl Logical {
     }
 }
 impl Expr for Logical {
-    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
+    fn accept(&self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_logical_expr(self)
     }
 }
 
 pub struct Set {
-    object: Box<dyn Expr>,
-    name: Token,
-    value: Box<dyn Expr>,
+    pub object: Box<dyn Expr>,
+    pub name: Token,
+    pub value: Box<dyn Expr>,
 }
 impl Set {
     pub fn new(object: Box<dyn Expr>, name: Token, value: Box<dyn Expr>) -> Self {
@@ -155,14 +155,14 @@ impl Set {
     }
 }
 impl Expr for Set {
-    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
+    fn accept(&self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_set_expr(self)
     }
 }
 
 pub struct Super {
-    keyword: Token,
-    method: Token,
+    pub keyword: Token,
+    pub method: Token,
 }
 impl Super {
     pub fn new(keyword: Token, method: Token) -> Self {
@@ -170,7 +170,7 @@ impl Super {
     }
 }
 impl Expr for Super {
-    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
+    fn accept(&self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_super_expr(self)
     }
 }
@@ -184,7 +184,7 @@ impl This {
     }
 }
 impl Expr for This {
-    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
+    fn accept(&self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_this_expr(self)
     }
 }
@@ -199,13 +199,13 @@ impl Unary {
     }
 }
 impl Expr for Unary {
-    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
+    fn accept(&self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_unary_expr(self)
     }
 }
 
 pub struct Variable {
-    name: Token,
+    pub name: Token,
 }
 impl Variable {
     pub fn new(name: Token) -> Self {
@@ -213,7 +213,7 @@ impl Variable {
     }
 }
 impl Expr for Variable {
-    fn accept(& self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
+    fn accept(&self, visitor: &mut dyn ExprVisitor) -> ReturnTypes {
         visitor.visit_variable_expr(self)
     }
 }
