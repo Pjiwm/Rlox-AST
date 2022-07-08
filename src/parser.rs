@@ -1,7 +1,9 @@
-// TODO fix borrowing and ownership in parser
+use std::{io::{Error, ErrorKind, self}, string::ParseError, convert::Infallible};
+
 use crate::{
-    expr::{Binary, Expr, Unary, Literal, Grouping},
-    token::{Token, TokenType, DataType},
+    expr::{Binary, Expr, Grouping, Literal, Unary},
+    token::{DataType, Token, TokenType},
+    error::{error, token_error},
 };
 
 struct Parser {
@@ -18,7 +20,7 @@ impl Parser {
         self.equality()
     }
 
-      fn equality(&mut self) -> Box<dyn Expr> {
+    fn equality(&mut self) -> Box<dyn Expr> {
         let mut expr: Box<dyn Expr> = self.comparison();
         let equal_vec = vec![TokenType::Equalequal, TokenType::Bangequal];
         while self.matches(&equal_vec) {
@@ -81,7 +83,7 @@ impl Parser {
         let false_vec = vec![TokenType::False];
         if self.matches(&false_vec) {
             return Box::new(Literal::new(Some(DataType::False(false))));
-        } 
+        }
         let true_vec = vec![TokenType::True];
         if self.matches(&true_vec) {
             return Box::new(Literal::new(Some(DataType::True(true))));
@@ -100,20 +102,12 @@ impl Parser {
         let left_paren_vec = vec![TokenType::LeftParen];
         if self.matches(&left_paren_vec) {
             let expr = self.expression();
-            self.consume(TokenType::RightParen, "Expect ')' after expression.");
+            // TODO unwrapping might have to be replaced with match or a different type of check.
+            self.consume(TokenType::RightParen, "Expect ')' after expression.").unwrap();
             return Box::new(Grouping::new(expr));
         }
         // If none of the above apply we'll jut return Nil
         Box::new(Literal::new(None))
-    }
-
-    // TODO implement consume
-    fn consume(&mut self, token_type: TokenType, message: &str) {
-        if self.check(token_type) {
-            self.advance();
-        } else {
-            panic!("{}", message);
-        }
     }
 
     fn matches(&mut self, types: &Vec<TokenType>) -> bool {
@@ -124,6 +118,19 @@ impl Parser {
             }
         }
         return false;
+    }
+
+    fn consume(&mut self, token_type: TokenType, message: &str) -> Result<&Token, Error> {
+        if self.check(token_type) {
+            Ok(self.advance())
+        } else {
+            Err(self.parse_error(self.peek(), message))
+        }
+    }
+
+    fn parse_error(&self, token: &Token, message: &str) -> io::Error {
+        token_error(token, message);
+        io::Error::new(ErrorKind::Other, message)
     }
 
     fn check(&self, token_type: TokenType) -> bool {
