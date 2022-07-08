@@ -110,8 +110,8 @@ pub struct Literal {
     pub value: Option<DataType>,
 }
 impl Literal {
-    pub fn new(value: DataType) -> Self {
-        Self { value: Some(value) }
+    pub fn new(value: Option<DataType>) -> Self {
+        Self { value: value }
     }
 }
 impl Expr for Literal {

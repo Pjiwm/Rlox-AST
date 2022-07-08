@@ -11,9 +11,9 @@ mod error;
 mod expr;
 mod scanner;
 mod token;
+mod parser;
 #[macro_use]
 extern crate lazy_static;
-extern crate dyn_safe;
 
 fn main() {
     demo_ast();
@@ -70,12 +70,12 @@ fn demo_ast() {
     let mut expression = Binary::new(
         Box::new(Unary::new(
             Token::new(TokenType::Minus, "-".to_string(), None, 1),
-            Box::new(Literal::new(DataType::Number(123.0))),
+            Box::new(Literal::new(Some(DataType::Number(123.0)))),
         )),
         Token::new(TokenType::Star, "*".to_string(), None, 1),
-        Box::new(Grouping::new(Box::new(Literal::new(DataType::Number(
+        Box::new(Grouping::new(Box::new(Literal::new(Some(DataType::Number(
             45.67,
-        ))))),
+        )))))),
     );
     let expression = &mut expression;
     let mut printer = ast_printer::AstPrinter::new();

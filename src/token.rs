@@ -1,10 +1,12 @@
 use core::fmt::Debug;
+use strum_macros::Display;
+
 #[derive(Debug, Clone)]
 pub struct Token {
-    token_type: TokenType,
+    pub token_type: TokenType,
     pub lexeme: String,
-    literal: Option<DataType>,
-    line: u32,
+    pub literal: Option<DataType>,
+    pub line: u32,
 }
 impl Token {
     pub fn new(
@@ -21,7 +23,7 @@ impl Token {
         }
     }
 }
-#[derive(strum_macros::Display, Clone, Debug)]
+#[derive(Display, Clone, Debug, PartialEq)]
 pub enum TokenType {
     // single-character tokens.
     LeftParen,
@@ -72,4 +74,6 @@ pub enum TokenType {
 pub enum DataType {
     String(String),
     Number(f64),
+    True(bool),
+    False(bool)
 }

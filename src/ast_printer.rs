@@ -60,6 +60,8 @@ impl ExprVisitor for AstPrinter {
             match expr.value.as_ref().unwrap() {
                 DataType::Number(n) => ReturnTypes::String(n.to_string()),
                 DataType::String(s) => ReturnTypes::String(s.to_string()),
+                DataType::True(_) => ReturnTypes::String("true".to_string()),
+                DataType::False(_) => ReturnTypes::String("false".to_string()),
             }
         }
     }
