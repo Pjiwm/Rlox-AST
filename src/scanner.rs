@@ -62,7 +62,6 @@ impl Scanner {
                 // This is for single line comments
                 if self.matches('/') {
                     while (self.peek() != '\n') && !self.is_at_end() {
-                        println!("New line: {}", self.peek() == '\n');
                         self.advance();
                     }
                 // This is for multi line comments

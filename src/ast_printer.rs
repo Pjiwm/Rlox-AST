@@ -6,7 +6,7 @@ impl AstPrinter {
         Self
     }
 
-    pub fn print<T: Expr>(&mut self, expr: &mut T) -> String {
+    pub fn print(&mut self, expr: Box<dyn Expr>) -> String {
         let return_string = match expr.accept(self) {
             ReturnTypes::String(s) => s,
         };

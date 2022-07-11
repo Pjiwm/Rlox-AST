@@ -9,14 +9,13 @@ use token::{DataType, Token, TokenType};
 mod ast_printer;
 mod error;
 mod expr;
+mod parser;
 mod scanner;
 mod token;
-mod parser;
 #[macro_use]
 extern crate lazy_static;
 
 fn main() {
-    demo_ast();
     let args: Vec<String> = env::args().collect();
     if args.len() > 2 {
         println!("Usage: jlox [script]");
@@ -31,7 +30,6 @@ fn main() {
 
 fn run_file(path: &str) -> io::Result<()> {
     let src = std::fs::read_to_string(path)?;
-    print!("{}", src);
     run(&src).unwrap();
     if error::get_error() {
         process::exit(65);
@@ -60,25 +58,30 @@ fn run_prompt() -> io::Result<()> {
 fn run(source: &str) -> io::Result<()> {
     let mut token_scanner = scanner::Scanner::new(source.to_string());
     let tokens = token_scanner.scan_tokens();
-    for token in tokens {
-        println!("{:?}", token);
-    }
+    let mut parser = parser::Parser::new(tokens.to_vec());
+    let expression = parser.parse();
+    let mut printer = ast_printer::AstPrinter::new();
+    let expression_str = printer.print(expression);
+    println!("{}", expression_str);
     Ok(())
 }
 
-fn demo_ast() {
-    let mut expression = Binary::new(
+fn _demo_ast() {
+    let expression = _binary_expression();
+    let mut printer = ast_printer::AstPrinter::new();
+    let expression_str = printer.print(Box::new(expression));
+    println!("{}", expression_str);
+}
+
+fn _binary_expression() -> Binary {
+    Binary::new(
         Box::new(Unary::new(
             Token::new(TokenType::Minus, "-".to_string(), None, 1),
             Box::new(Literal::new(Some(DataType::Number(123.0)))),
         )),
         Token::new(TokenType::Star, "*".to_string(), None, 1),
-        Box::new(Grouping::new(Box::new(Literal::new(Some(DataType::Number(
-            45.67,
-        )))))),
-    );
-    let expression = &mut expression;
-    let mut printer = ast_printer::AstPrinter::new();
-    let expression_str  = printer.print::<Binary>(expression);
-    println!("{}", expression_str);
+        Box::new(Grouping::new(Box::new(Literal::new(Some(
+            DataType::Number(45.67),
+        ))))),
+    )
 }
