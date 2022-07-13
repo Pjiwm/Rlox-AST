@@ -1,10 +1,13 @@
-use crate::expr::*;
+use crate::{
+    expr::{self, *},
+    token::{DataType, TokenType},
+};
 
 pub struct Interpreter {}
 
 impl ExprVisitor for Interpreter {
     fn visit_assign_expr(&mut self, expr: &Assign) -> ReturnTypes {
-        expr.value.accept(self)
+        todo!()
     }
 
     fn visit_binary_expr(&mut self, expr: &Binary) -> ReturnTypes {
@@ -20,11 +23,11 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_grouping_expr(&mut self, expr: &Grouping) -> ReturnTypes {
-        todo!()
+        expr.expression.accept(self)
     }
 
     fn visit_literal_expr(&mut self, expr: &Literal) -> ReturnTypes {
-        todo!()
+        ReturnTypes::DataType(expr.value.clone())
     }
 
     fn visit_logical_expr(&mut self, expr: &Logical) -> ReturnTypes {
@@ -44,10 +47,33 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_unary_expr(&mut self, expr: &Unary) -> ReturnTypes {
-        todo!()
+        // So right now if we have a none number it just becomes 0.0...
+        let right = match expr.right.accept(self) {
+            ReturnTypes::DataType(d) => match d.unwrap() {
+                DataType::Number(n) => DataType::Number(-n),
+                _ => DataType::Number(0.0),
+            },
+            _ => DataType::Number(0.0),
+        };
+        match expr.operator.token_type {
+            TokenType::Minus => ReturnTypes::DataType(Some(right)),
+            // TODO fix this tomorrow
+            TokenType::Bang => ReturnTypes::DataType(Some(DataType::Bool(!self.is_truthy(&right)))),
+            _ => todo!(),
+        }
     }
 
     fn visit_variable_expr(&mut self, expr: &Variable) -> ReturnTypes {
         todo!()
+    }
+}
+
+impl Interpreter {
+    fn is_truthy(&self, data_type: &DataType) -> bool {
+        match data_type {
+            DataType::Bool(b) => *b,
+            DataType::Nil => false,
+            _ => true,
+        }
     }
 }

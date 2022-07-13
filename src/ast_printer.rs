@@ -9,6 +9,7 @@ impl AstPrinter {
     pub fn print(&mut self, expr: Box<dyn Expr>) -> String {
         let return_string = match expr.accept(self) {
             ReturnTypes::String(s) => s,
+            ReturnTypes::DataType(_) => "Incorrect expression".to_string(),
         };
         return_string
     }
@@ -21,6 +22,7 @@ impl AstPrinter {
             s.push_str(" ");
             let expr_str = match expr.accept(self) {
                 ReturnTypes::String(s) => s,
+                ReturnTypes::DataType(_) => "Incorrect expression".to_string(),
             };
             s.push_str(expr_str.as_str());
         }
@@ -60,8 +62,8 @@ impl ExprVisitor for AstPrinter {
             match expr.value.as_ref().unwrap() {
                 DataType::Number(n) => ReturnTypes::String(n.to_string()),
                 DataType::String(s) => ReturnTypes::String(s.to_string()),
-                DataType::True(_) => ReturnTypes::String("true".to_string()),
-                DataType::False(_) => ReturnTypes::String("false".to_string()),
+                DataType::Bool(_) => ReturnTypes::String("bool".to_string()),
+                DataType::Nil => ReturnTypes::String("Nil".to_string()),
             }
         }
     }

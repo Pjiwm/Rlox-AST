@@ -5,6 +5,7 @@ pub trait Expr {
 }
 pub enum ReturnTypes {
     String(String),
+    DataType(Option<DataType>)
 }
 
 pub trait ExprVisitor {

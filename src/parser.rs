@@ -92,11 +92,11 @@ impl Parser {
     fn primary(&mut self) -> Result<Box<dyn Expr>, io::Error> {
         let false_vec = vec![TokenType::False];
         if self.matches(&false_vec) {
-            return Ok(Box::new(Literal::new(Some(DataType::False(false)))));
+            return Ok(Box::new(Literal::new(Some(DataType::Bool(false)))));
         }
         let true_vec = vec![TokenType::True];
         if self.matches(&true_vec) {
-            return Ok(Box::new(Literal::new(Some(DataType::True(true)))));
+            return Ok(Box::new(Literal::new(Some(DataType::Bool(true)))));
         }
         let nil_vec = vec![TokenType::Nil];
         if self.matches(&nil_vec) {
