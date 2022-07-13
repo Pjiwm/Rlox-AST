@@ -1,6 +1,6 @@
 use crate::{
-    expr::{self, *},
-    token::{self, DataType, TokenType},
+    expr::*,
+    token::{DataType, TokenType},
 };
 
 pub struct Interpreter {}

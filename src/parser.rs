@@ -1,11 +1,7 @@
-use std::{
-    convert::Infallible,
-    io::{self, Error, ErrorKind},
-    string::ParseError,
-};
+use std::io::{self, Error, ErrorKind};
 
 use crate::{
-    error::{error, token_error},
+    error::token_error,
     expr::{Binary, Expr, Grouping, Literal, Unary},
     token::{DataType, Token, TokenType},
 };
