@@ -108,9 +108,7 @@ impl Parser {
         let left_paren_vec = vec![TokenType::LeftParen];
         if self.matches(&left_paren_vec) {
             let expr = self.expression();
-            // TODO unwrapping might have to be replaced with match or a different type of check.
-            self.consume(TokenType::RightParen, "Expect ')' after expression.")
-                .unwrap();
+            self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
             return Ok(Box::new(Grouping::new(expr?)));
         }
 
