@@ -1,7 +1,7 @@
 use std::io::{self, Error, ErrorKind};
 
 use crate::{
-    error::token_error,
+    error::parse_error,
     expr::{Binary, Expr, Grouping, Literal, Unary},
     token::{DataType, Token, TokenType},
 };
@@ -134,7 +134,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_error(&self, token: &Token, message: &str) -> Error {
-        token_error(token, message);
+        parse_error(token, message);
         io::Error::new(ErrorKind::Other, message)
     }
 

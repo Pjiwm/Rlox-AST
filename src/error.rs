@@ -16,18 +16,23 @@ pub fn token_error(token: &Token, message: &str) {
 }
 
 pub fn runtime_error(token: &Option<Token>, message: &str) {
+    let message = format!("[Runtime error] {}", message.to_owned());
     unsafe {
         HAD_RUNTIME_ERROR = true;
     }
     match token {
-        Some(t) => report(t.line, message),
-        None => report(0, message),
+        Some(t) => report(t.line, message.as_str()),
+        None => report(0, message.as_str()),
     }
+}
+
+pub fn parse_error(token: &Token, message: &str) {
+    let message = format!("[Parse error] {}", message.to_owned());
+    token_error(token, message.as_str());
 }
 
 fn report(line: u32, message: &str) {
     println!("Error at line {}: {}", line, message);
-    println!("{}", message);
     set_error(true);
 }
 

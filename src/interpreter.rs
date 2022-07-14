@@ -35,7 +35,6 @@ impl ExprVisitor for Interpreter {
                 );
             }
         };
-        println!("{:?}", expr.operator.token_type);
         let calculation = match expr.operator.token_type {
             // There's extra logic for strings, this is so strings can be concatinated with the + operator.
             TokenType::Plus => match (left, right) {
@@ -203,7 +202,6 @@ impl Interpreter {
                 }
                 Some(DataType::Bool(b)) => {
                     let string = b.to_string();
-                    let string = string.substring(0, string.len() - 2);
                     string.to_owned()
                 }
                 Some(DataType::Nil) => "nil".to_string(),
