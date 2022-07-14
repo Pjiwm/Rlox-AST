@@ -1,5 +1,10 @@
+use std::num;
+
+use substring::Substring;
+
 use crate::{
-    expr::*,
+    error,
+    expr::{self, *},
     token::{DataType, Token, TokenType},
 };
 
@@ -154,7 +159,9 @@ impl ExprVisitor for Interpreter {
             TokenType::Bang => {
                 VisitorTypes::DataType(Some(DataType::Bool(!self.is_truthy(&right))))
             }
-            _ => return self.runtime_error(Some(&expr.operator), "Expected a '!' or '-' operator."),
+            _ => {
+                return self.runtime_error(Some(&expr.operator), "Expected a '!' or '-' operator.")
+            }
         }
     }
 
@@ -164,6 +171,48 @@ impl ExprVisitor for Interpreter {
 }
 
 impl Interpreter {
+    fn interpreter(&mut self, expr: &mut dyn Expr) {
+        let value = expr.accept(self);
+        match value {
+            VisitorTypes::DataType(_) => {
+                println!("{}", self.stringify(value));
+            }
+            VisitorTypes::RunTimeError { token, msg } => match token {
+                Some(t) => {
+                    error::token_error(&t, msg.as_str());
+                }
+                None => error::error(0, "Unknown run time error occured."),
+            },
+            _ => panic!(
+                "Unknown visitor type returned.\n This should be an impossible state to be in."
+            ),
+        }
+    }
+
+    fn stringify(&self, visitor_type: VisitorTypes) -> String {
+        let result = match visitor_type {
+            VisitorTypes::DataType(d) => match d {
+                Some(DataType::String(s)) => s,
+                Some(DataType::Number(n)) => {
+                    let mut number = n.to_string();
+                    if number.ends_with(".0") {
+                        number = number.substring(0, number.len() - 2).to_string();
+                    }
+                    number
+                }
+                Some(DataType::Bool(b)) => {
+                    let string = b.to_string();
+                    let string = string.substring(0, string.len() - 2);
+                    string.to_owned()
+                }
+                Some(DataType::Nil) => "nil".to_string(),
+                None => "nil".to_string(),
+            },
+            _ => panic!("An error occured during interpretting."),
+        };
+        result
+    }
+
     fn is_truthy(&self, data_type: &DataType) -> bool {
         match data_type {
             DataType::Bool(b) => *b,
