@@ -11,15 +11,24 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_binary_expr(&mut self, expr: &Binary) -> VisitorTypes {
-        // TODO panics could be replaced with a better error handling system
         let left = match expr.left.accept(self) {
             VisitorTypes::DataType(d) => d,
-            _ => panic!("Expected a number"),
+            _ => {
+                return self.runtime_error(
+                    Some(&expr.operator),
+                    "Expected a binary operation with proper data types.",
+                );
+            }
         };
 
         let right = match expr.right.accept(self) {
             VisitorTypes::DataType(d) => d,
-            _ => panic!("Expected a number"),
+            _ => {
+                return self.runtime_error(
+                    Some(&expr.operator),
+                    "Expected a binary operation with proper data types.",
+                );
+            }
         };
 
         let calculation = match expr.operator.token_type {
@@ -32,33 +41,69 @@ impl ExprVisitor for Interpreter {
                     s.push_str(r.as_str());
                     DataType::String(s)
                 }
-                _ => panic!("Expected a number or string"),
+                _ => {
+                    return self.runtime_error(
+                        Some(&expr.operator),
+                        "Operands must be two numbers or two strings.",
+                    );
+                }
             },
             TokenType::Minus => match (left, right) {
                 (Some(DataType::Number(l)), Some(DataType::Number(r))) => DataType::Number(l - r),
                 _ => {
-                    return self.runtime_error(Some(&expr.operator), "Expected a number");
+                    return self.runtime_error(Some(&expr.operator), "Expected a number.");
                 }
             },
             TokenType::Slash => match (left, right) {
                 (Some(DataType::Number(l)), Some(DataType::Number(r))) => DataType::Number(l / r),
-                _ => panic!("Expected a number"),
+                _ => {
+                    return self.runtime_error(Some(&expr.operator), "Expected a number.");
+                }
             },
             TokenType::Star => match (left, right) {
                 (Some(DataType::Number(l)), Some(DataType::Number(r))) => DataType::Number(l * r),
-                _ => panic!("Expected a number"),
+                _ => {
+                    return self.runtime_error(Some(&expr.operator), "Expected a number.");
+                }
             },
             TokenType::Equalequal => match (left, right) {
                 (Some(l), Some(r)) => DataType::Bool(self.is_equal(&l, &r)),
-                _ => panic!("Expected a binary operation"),
+                _ => {
+                    return self
+                        .runtime_error(Some(&expr.operator), "Expected a binary operation.");
+                }
             },
             TokenType::Greater => match (left, right) {
                 (Some(DataType::Bool(l)), Some(DataType::Bool(r))) => DataType::Bool(l > r),
                 _ => {
-                    return self.runtime_error(Some(&expr.operator), "Expected a number");
+                    return self
+                        .runtime_error(Some(&expr.operator), "Expected a binary operation.");
                 }
             },
-            _ => panic!("No such binary operator"),
+            TokenType::Greaterequal => match (left, right) {
+                (Some(DataType::Bool(l)), Some(DataType::Bool(r))) => DataType::Bool(l >= r),
+                _ => {
+                    return self
+                        .runtime_error(Some(&expr.operator), "Expected a binary operation.");
+                }
+            },
+            TokenType::Less => match (left, right) {
+                (Some(DataType::Bool(l)), Some(DataType::Bool(r))) => DataType::Bool(l < r),
+                _ => {
+                    return self
+                        .runtime_error(Some(&expr.operator), "Expected a binary operation.");
+                }
+            },
+            TokenType::Lessequal => match (left, right) {
+                (Some(DataType::Bool(l)), Some(DataType::Bool(r))) => DataType::Bool(l <= r),
+                _ => {
+                    return self
+                        .runtime_error(Some(&expr.operator), "Expected a binary operation.");
+                }
+            },
+            _ => {
+                return self.runtime_error(Some(&expr.operator), "Invalid binary operation.");
+            }
         };
         VisitorTypes::DataType(Some(calculation))
     }
@@ -100,16 +145,16 @@ impl ExprVisitor for Interpreter {
         let right = match expr.right.accept(self) {
             VisitorTypes::DataType(d) => match d.unwrap() {
                 DataType::Number(n) => DataType::Number(-n),
-                _ => return self.runtime_error(Some(&expr.operator), "Expected a number"),
+                _ => return self.runtime_error(Some(&expr.operator), "Expected a number."),
             },
-            _ => return self.runtime_error(Some(&expr.operator), "Expected a number"),
+            _ => return self.runtime_error(Some(&expr.operator), "Expected a number."),
         };
         match expr.operator.token_type {
             TokenType::Minus => VisitorTypes::DataType(Some(right)),
             TokenType::Bang => {
                 VisitorTypes::DataType(Some(DataType::Bool(!self.is_truthy(&right))))
             }
-            _ => return self.runtime_error(Some(&expr.operator), "Expected a ! or -"),
+            _ => return self.runtime_error(Some(&expr.operator), "Expected a '!' or '-' operator."),
         }
     }
 
