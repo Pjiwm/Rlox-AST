@@ -177,12 +177,9 @@ impl Interpreter {
             VisitorTypes::DataType(_) => {
                 println!("{}", self.stringify(value));
             }
-            VisitorTypes::RunTimeError { token, msg } => match token {
-                Some(t) => {
-                    error::token_error(&t, msg.as_str());
-                }
-                None => error::error(0, "Unknown run time error occured."),
-            },
+            VisitorTypes::RunTimeError { token, msg } => {
+                error::runtime_error(&token, msg.as_str());
+            }
             _ => panic!(
                 "Unknown visitor type returned.\n This should be an impossible state to be in."
             ),
