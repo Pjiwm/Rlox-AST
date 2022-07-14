@@ -22,8 +22,16 @@ impl Token {
             line,
         }
     }
+    pub fn dup(&self) -> Self {
+        Token {
+            token_type: self.token_type,
+            lexeme: self.lexeme.clone(),
+            literal: self.literal.clone(),
+            line: self.line,
+        }
+    }
 }
-#[derive(Display, Clone, Debug, PartialEq)]
+#[derive(Display, Clone, Debug, PartialEq, Copy)]
 pub enum TokenType {
     // single-character tokens.
     LeftParen,

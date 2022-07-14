@@ -6,13 +6,13 @@ use crate::{
     token::{DataType, Token, TokenType},
 };
 
-pub struct Parser {
-    tokens: Vec<Token>,
+pub struct Parser<'a> {
+    tokens: &'a [Token],
     current: usize,
 }
 
-impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
+impl<'a> Parser<'a> {
+    pub fn new(tokens: &'a [Token]) -> Self {
         Parser { tokens, current: 0 }
     }
 
@@ -28,8 +28,8 @@ impl Parser {
         let mut expr = self.comparison();
         let equal_vec = vec![TokenType::Equalequal, TokenType::Bangequal];
         while self.matches(&equal_vec) {
+            let operator = self.previous().dup();
             let right = self.comparison();
-            let operator = self.previous();
             expr = Ok(Box::new(Binary::new(expr?, operator.clone(), right?)));
         }
         expr
@@ -44,8 +44,8 @@ impl Parser {
             TokenType::Lessequal,
         ];
         while self.matches(&comparison_vec) {
+            let operator = self.previous().dup();
             let right = self.term();
-            let operator = self.previous();
             expr = Ok(Box::new(Binary::new(expr?, operator.clone(), right?)));
         }
         expr
@@ -55,8 +55,8 @@ impl Parser {
         let mut expr = self.factor();
         let term_vec = vec![TokenType::Minus, TokenType::Plus];
         while self.matches(&term_vec) {
+            let operator = self.previous().dup();
             let right = self.factor();
-            let operator = self.previous();
             expr = Ok(Box::new(Binary::new(expr?, operator.clone(), right?)));
         }
         expr
@@ -66,8 +66,8 @@ impl Parser {
         let mut expr = self.unary();
         let factor_vec = vec![TokenType::Star, TokenType::Slash];
         while self.matches(&factor_vec) {
+            let operator = self.previous().dup();
             let right = self.unary();
-            let operator = self.previous();
             expr = Ok(Box::new(Binary::new(expr?, operator.clone(), right?)));
         }
         expr
@@ -76,8 +76,8 @@ impl Parser {
     fn unary(&mut self) -> Result<Box<dyn Expr>, Error> {
         let unary_vec = vec![TokenType::Bang, TokenType::Minus];
         if self.matches(&unary_vec) {
+            let operator = self.previous().dup();
             let right = self.unary();
-            let operator = self.previous();
             return Ok(Box::new(Unary::new(operator.clone(), right?)));
         }
         self.primary()
@@ -90,7 +90,7 @@ impl Parser {
         }
         let true_vec = vec![TokenType::True];
         if self.matches(&true_vec) {
-            return Ok(Box::new(Literal::new(Some(DataType::Bool(true))))); 
+            return Ok(Box::new(Literal::new(Some(DataType::Bool(true)))));
         }
         let nil_vec = vec![TokenType::Nil];
         if self.matches(&nil_vec) {
@@ -184,6 +184,6 @@ impl Parser {
     }
 
     fn previous(&self) -> &Token {
-        &self.tokens[self.current - 1]
+        &self.tokens.get(self.current -1).unwrap()
     }
 }

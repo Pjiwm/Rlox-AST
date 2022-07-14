@@ -40,3 +40,7 @@ pub fn set_error(error: bool) {
 pub fn get_error() -> bool {
     unsafe { HAD_ERROR }
 }
+
+pub fn get_runtime_error() -> bool {
+    unsafe { HAD_RUNTIME_ERROR }
+}

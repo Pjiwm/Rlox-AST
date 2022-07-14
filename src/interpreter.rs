@@ -8,7 +8,7 @@ use crate::{
     token::{DataType, Token, TokenType},
 };
 
-pub struct Interpreter {}
+pub struct Interpreter;
 
 impl ExprVisitor for Interpreter {
     fn visit_assign_expr(&mut self, expr: &Assign) -> VisitorTypes {
@@ -35,7 +35,7 @@ impl ExprVisitor for Interpreter {
                 );
             }
         };
-
+        println!("{:?}", expr.operator.token_type);
         let calculation = match expr.operator.token_type {
             // There's extra logic for strings, this is so strings can be concatinated with the + operator.
             TokenType::Plus => match (left, right) {
@@ -171,7 +171,11 @@ impl ExprVisitor for Interpreter {
 }
 
 impl Interpreter {
-    fn interpreter(&mut self, expr: &mut dyn Expr) {
+    pub fn new() -> Self {
+        Self
+    }
+
+    pub fn interpret(&mut self, expr: &mut dyn Expr) {
         let value = expr.accept(self);
         match value {
             VisitorTypes::DataType(_) => {

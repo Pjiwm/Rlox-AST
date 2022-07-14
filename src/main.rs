@@ -6,6 +6,8 @@ use std::{
 
 use expr::{Binary, Grouping, Literal, Unary};
 use token::{DataType, Token, TokenType};
+
+use crate::interpreter::Interpreter;
 mod ast_printer;
 mod error;
 mod expr;
@@ -35,6 +37,9 @@ fn run_file(path: &str) -> io::Result<()> {
     if error::get_error() {
         process::exit(65);
     }
+    if error::get_runtime_error() {
+        process::exit(70);
+    }
     Ok(())
 }
 
@@ -59,29 +64,37 @@ fn run_prompt() -> io::Result<()> {
 fn run(source: &str) -> io::Result<()> {
     let mut token_scanner = scanner::Scanner::new(source.to_string());
     let tokens = token_scanner.scan_tokens();
-    let mut parser = parser::Parser::new(tokens.to_vec());
+    let mut parser = parser::Parser::new(&tokens);
+    println!("{:?}", tokens);
     // If we have an error during parsing, we want to print it and exit.
-    let expression = match parser.parse() {
+    let mut expression = match parser.parse() {
         Ok(expr) => expr,
         Err(err) => {
             println!("{}", err);
             return Ok(());
         }
     };
+
+    let mut interpreter = Interpreter::new();
+    interpreter.interpret(expression.as_mut());
+
     let mut printer = ast_printer::AstPrinter::new();
     let expression_str = printer.print(expression);
     println!("{}", expression_str);
+    println!("VS");
+    _demo_ast();
     Ok(())
 }
 
 fn _demo_ast() {
-    let expression = _binary_expression();
+    // let expression = _binary_expression_multi();
+    let expression = _binary_expression_sum();
     let mut printer = ast_printer::AstPrinter::new();
     let expression_str = printer.print(Box::new(expression));
     println!("{}", expression_str);
 }
 
-fn _binary_expression() -> Binary {
+fn _binary_expression_multi() -> Binary {
     Binary::new(
         Box::new(Unary::new(
             Token::new(TokenType::Minus, "-".to_string(), None, 1),
@@ -91,5 +104,13 @@ fn _binary_expression() -> Binary {
         Box::new(Grouping::new(Box::new(Literal::new(Some(
             DataType::Number(45.67),
         ))))),
+    )
+}
+
+fn _binary_expression_sum() -> Binary {
+    Binary::new(
+        Box::new(Literal::new(Some(DataType::Number(1.0)))),
+        Token::new(TokenType::Plus, "+".to_string(), None, 1),
+        Box::new(Literal::new(Some(DataType::Number(2.0)))),
     )
 }
