@@ -72,6 +72,9 @@ impl ExprVisitor for Interpreter {
             },
             TokenType::Equalequal => match (left, right) {
                 (Some(l), Some(r)) => DataType::Bool(self.is_equal(&l, &r)),
+                (None, None) => DataType::Bool(true),
+                (Some(_), None) => DataType::Bool(false),
+                (None, Some(_)) => DataType::Bool(false),
                 _ => {
                     return self
                         .runtime_error(Some(&expr.operator), "Expected a binary operation.");
@@ -147,9 +150,12 @@ impl ExprVisitor for Interpreter {
     fn visit_unary_expr(&mut self, expr: &Unary) -> VisitorTypes {
         // So right now if we have a none number it just becomes 0.0...
         let right = match expr.right.accept(self) {
-            VisitorTypes::DataType(d) => match d.unwrap() {
-                DataType::Number(n) => DataType::Number(-n),
-                _ => return self.runtime_error(Some(&expr.operator), "Expected a number."),
+            VisitorTypes::DataType(d) => match d {
+                Some(v) => match v {
+                    DataType::Number(v) => DataType::Number(-v),
+                    _ => return self.runtime_error(Some(&expr.operator), "Expected a number."),
+                },
+                None => DataType::Nil,
             },
             _ => return self.runtime_error(Some(&expr.operator), "Expected a number."),
         };
