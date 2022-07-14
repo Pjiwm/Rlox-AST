@@ -5,7 +5,8 @@ pub trait Expr {
 }
 pub enum VisitorTypes {
     String(String),
-    DataType(Option<DataType>)
+    DataType(Option<DataType>),
+    RunTimeError {token: Token, msg: String},
 }
 
 pub trait ExprVisitor {
