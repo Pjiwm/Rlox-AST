@@ -6,19 +6,19 @@ use crate::{
 pub struct Interpreter {}
 
 impl ExprVisitor for Interpreter {
-    fn visit_assign_expr(&mut self, expr: &Assign) -> ReturnTypes {
+    fn visit_assign_expr(&mut self, expr: &Assign) -> VisitorTypes {
         todo!()
     }
 
-    fn visit_binary_expr(&mut self, expr: &Binary) -> ReturnTypes {
+    fn visit_binary_expr(&mut self, expr: &Binary) -> VisitorTypes {
         // TODO panics could be replaced with a better error handling system
         let left = match expr.left.accept(self) {
-            ReturnTypes::DataType(d) => d,
+            VisitorTypes::DataType(d) => d,
             _ => panic!("Expected a number"),
         };
 
         let right = match expr.right.accept(self) {
-            ReturnTypes::DataType(d) => d,
+            VisitorTypes::DataType(d) => d,
             _ => panic!("Expected a number"),
         };
 
@@ -52,58 +52,58 @@ impl ExprVisitor for Interpreter {
             },
             _ => panic!("No such binary operator"),
         };
-        ReturnTypes::DataType(Some(calculation))
+        VisitorTypes::DataType(Some(calculation))
     }
 
-    fn visit_call_expr(&mut self, expr: &Call) -> ReturnTypes {
+    fn visit_call_expr(&mut self, expr: &Call) -> VisitorTypes {
         todo!()
     }
 
-    fn visit_get_expr(&mut self, expr: &Get) -> ReturnTypes {
+    fn visit_get_expr(&mut self, expr: &Get) -> VisitorTypes {
         todo!()
     }
 
-    fn visit_grouping_expr(&mut self, expr: &Grouping) -> ReturnTypes {
+    fn visit_grouping_expr(&mut self, expr: &Grouping) -> VisitorTypes {
         expr.expression.accept(self)
     }
 
-    fn visit_literal_expr(&mut self, expr: &Literal) -> ReturnTypes {
-        ReturnTypes::DataType(expr.value.clone())
+    fn visit_literal_expr(&mut self, expr: &Literal) -> VisitorTypes {
+        VisitorTypes::DataType(expr.value.clone())
     }
 
-    fn visit_logical_expr(&mut self, expr: &Logical) -> ReturnTypes {
+    fn visit_logical_expr(&mut self, expr: &Logical) -> VisitorTypes {
         todo!()
     }
 
-    fn visit_set_expr(&mut self, expr: &Set) -> ReturnTypes {
+    fn visit_set_expr(&mut self, expr: &Set) -> VisitorTypes {
         todo!()
     }
 
-    fn visit_super_expr(&mut self, expr: &Super) -> ReturnTypes {
+    fn visit_super_expr(&mut self, expr: &Super) -> VisitorTypes {
         todo!()
     }
 
-    fn visit_this_expr(&mut self, expr: &This) -> ReturnTypes {
+    fn visit_this_expr(&mut self, expr: &This) -> VisitorTypes {
         todo!()
     }
 
-    fn visit_unary_expr(&mut self, expr: &Unary) -> ReturnTypes {
+    fn visit_unary_expr(&mut self, expr: &Unary) -> VisitorTypes {
         // So right now if we have a none number it just becomes 0.0...
         let right = match expr.right.accept(self) {
-            ReturnTypes::DataType(d) => match d.unwrap() {
+            VisitorTypes::DataType(d) => match d.unwrap() {
                 DataType::Number(n) => DataType::Number(-n),
                 _ => DataType::Number(0.0),
             },
             _ => DataType::Number(0.0),
         };
         match expr.operator.token_type {
-            TokenType::Minus => ReturnTypes::DataType(Some(right)),
-            TokenType::Bang => ReturnTypes::DataType(Some(DataType::Bool(!self.is_truthy(&right)))),
+            TokenType::Minus => VisitorTypes::DataType(Some(right)),
+            TokenType::Bang => VisitorTypes::DataType(Some(DataType::Bool(!self.is_truthy(&right)))),
             _ => todo!(),
         }
     }
 
-    fn visit_variable_expr(&mut self, expr: &Variable) -> ReturnTypes {
+    fn visit_variable_expr(&mut self, expr: &Variable) -> VisitorTypes {
         todo!()
     }
 }
