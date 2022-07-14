@@ -15,29 +15,28 @@ impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
         Parser { tokens, current: 0 }
     }
-    // TODO for later:
-    // Every function in here might have to return a Result type and we handle that within this parse function.
-    pub fn parse(&mut self) -> Box<dyn Expr> {
+
+    pub fn parse(&mut self) -> Result<Box<dyn Expr>, Error> {
         self.expression()
     }
 
-    fn expression(&mut self) -> Box<dyn Expr> {
+    fn expression(&mut self) -> Result<Box<dyn Expr>, Error> {
         self.equality()
     }
 
-    fn equality(&mut self) -> Box<dyn Expr> {
-        let mut expr: Box<dyn Expr> = self.comparison();
+    fn equality(&mut self) -> Result<Box<dyn Expr>, Error> {
+        let mut expr = self.comparison();
         let equal_vec = vec![TokenType::Equalequal, TokenType::Bangequal];
         while self.matches(&equal_vec) {
             let right = self.comparison();
             let operator = self.previous();
-            expr = Box::new(Binary::new(expr, operator.clone(), right));
+            expr = Ok(Box::new(Binary::new(expr?, operator.clone(), right?)));
         }
         expr
     }
 
-    fn comparison(&mut self) -> Box<dyn Expr> {
-        let mut expr: Box<dyn Expr> = self.term();
+    fn comparison(&mut self) -> Result<Box<dyn Expr>, Error> {
+        let mut expr = self.term();
         let comparison_vec = vec![
             TokenType::Greater,
             TokenType::Greaterequal,
@@ -47,45 +46,44 @@ impl Parser {
         while self.matches(&comparison_vec) {
             let right = self.term();
             let operator = self.previous();
-            expr = Box::new(Binary::new(expr, operator.clone(), right));
+            expr = Ok(Box::new(Binary::new(expr?, operator.clone(), right?)));
         }
         expr
     }
 
-    fn term(&mut self) -> Box<dyn Expr> {
-        let mut expr: Box<dyn Expr> = self.factor();
+    fn term(&mut self) -> Result<Box<dyn Expr>, Error> {
+        let mut expr = self.factor();
         let term_vec = vec![TokenType::Minus, TokenType::Plus];
         while self.matches(&term_vec) {
             let right = self.factor();
             let operator = self.previous();
-            expr = Box::new(Binary::new(expr, operator.clone(), right));
+            expr = Ok(Box::new(Binary::new(expr?, operator.clone(), right?)));
         }
         expr
     }
 
-    fn factor(&mut self) -> Box<dyn Expr> {
-        let mut expr: Box<dyn Expr> = self.unary();
+    fn factor(&mut self) -> Result<Box<dyn Expr>, Error> {
+        let mut expr = self.unary();
         let factor_vec = vec![TokenType::Star, TokenType::Slash];
         while self.matches(&factor_vec) {
             let right = self.unary();
             let operator = self.previous();
-            expr = Box::new(Binary::new(expr, operator.clone(), right));
+            expr = Ok(Box::new(Binary::new(expr?, operator.clone(), right?)));
         }
         expr
     }
 
-    fn unary(&mut self) -> Box<dyn Expr> {
+    fn unary(&mut self) -> Result<Box<dyn Expr>, Error> {
         let unary_vec = vec![TokenType::Bang, TokenType::Minus];
         if self.matches(&unary_vec) {
             let right = self.unary();
             let operator = self.previous();
-            return Box::new(Unary::new(operator.clone(), right));
+            return Ok(Box::new(Unary::new(operator.clone(), right?)));
         }
-        // TODO This should be looked at in the future unwrapping and letting program panic VS handling errors
-        self.primary().unwrap()
+        self.primary()
     }
 
-    fn primary(&mut self) -> Result<Box<dyn Expr>, io::Error> {
+    fn primary(&mut self) -> Result<Box<dyn Expr>, Error> {
         let false_vec = vec![TokenType::False];
         if self.matches(&false_vec) {
             return Ok(Box::new(Literal::new(Some(DataType::Bool(false)))));
@@ -113,7 +111,7 @@ impl Parser {
             // TODO unwrapping might have to be replaced with match or a different type of check.
             self.consume(TokenType::RightParen, "Expect ')' after expression.")
                 .unwrap();
-            return Ok(Box::new(Grouping::new(expr)));
+            return Ok(Box::new(Grouping::new(expr?)));
         }
 
         Err(self.parse_error(self.peek(), "Expect expression."))
@@ -137,7 +135,7 @@ impl Parser {
         }
     }
 
-    fn parse_error(&self, token: &Token, message: &str) -> io::Error {
+    fn parse_error(&self, token: &Token, message: &str) -> Error {
         token_error(token, message);
         io::Error::new(ErrorKind::Other, message)
     }

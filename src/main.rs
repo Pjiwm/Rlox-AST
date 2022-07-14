@@ -9,10 +9,10 @@ use token::{DataType, Token, TokenType};
 mod ast_printer;
 mod error;
 mod expr;
+mod interpreter;
 mod parser;
 mod scanner;
 mod token;
-mod interpreter;
 #[macro_use]
 extern crate lazy_static;
 
@@ -60,7 +60,14 @@ fn run(source: &str) -> io::Result<()> {
     let mut token_scanner = scanner::Scanner::new(source.to_string());
     let tokens = token_scanner.scan_tokens();
     let mut parser = parser::Parser::new(tokens.to_vec());
-    let expression = parser.parse();
+    // If we have an error during parsing, we want to print it and exit.
+    let expression = match parser.parse() {
+        Ok(expr) => expr,
+        Err(err) => {
+            println!("{}", err);
+            return Ok(());
+        }
+    };
     let mut printer = ast_printer::AstPrinter::new();
     let expression_str = printer.print(expression);
     println!("{}", expression_str);
