@@ -90,7 +90,7 @@ impl Parser {
         }
         let true_vec = vec![TokenType::True];
         if self.matches(&true_vec) {
-            return Ok(Box::new(Literal::new(Some(DataType::Bool(true)))));
+            return Ok(Box::new(Literal::new(Some(DataType::Bool(true))))); 
         }
         let nil_vec = vec![TokenType::Nil];
         if self.matches(&nil_vec) {
@@ -154,6 +154,7 @@ impl Parser {
                 | TokenType::Return => {
                     return;
                 }
+                // TODO self.advance might has to be used there followed by a return.
                 _ => {}
             }
             self.advance();

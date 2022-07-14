@@ -1,6 +1,6 @@
 use crate::{
     expr::*,
-    token::{DataType, TokenType},
+    token::{DataType, Token, TokenType},
 };
 
 pub struct Interpreter {}
@@ -36,7 +36,9 @@ impl ExprVisitor for Interpreter {
             },
             TokenType::Minus => match (left, right) {
                 (Some(DataType::Number(l)), Some(DataType::Number(r))) => DataType::Number(l - r),
-                _ => panic!("Expected a number"),
+                _ => {
+                    return self.runtime_error(Some(&expr.operator), "Expected a number");
+                }
             },
             TokenType::Slash => match (left, right) {
                 (Some(DataType::Number(l)), Some(DataType::Number(r))) => DataType::Number(l / r),
@@ -49,6 +51,12 @@ impl ExprVisitor for Interpreter {
             TokenType::Equalequal => match (left, right) {
                 (Some(l), Some(r)) => DataType::Bool(self.is_equal(&l, &r)),
                 _ => panic!("Expected a binary operation"),
+            },
+            TokenType::Greater => match (left, right) {
+                (Some(DataType::Bool(l)), Some(DataType::Bool(r))) => DataType::Bool(l > r),
+                _ => {
+                    return self.runtime_error(Some(&expr.operator), "Expected a number");
+                }
             },
             _ => panic!("No such binary operator"),
         };
@@ -92,14 +100,16 @@ impl ExprVisitor for Interpreter {
         let right = match expr.right.accept(self) {
             VisitorTypes::DataType(d) => match d.unwrap() {
                 DataType::Number(n) => DataType::Number(-n),
-                _ => DataType::Number(0.0),
+                _ => return self.runtime_error(Some(&expr.operator), "Expected a number"),
             },
-            _ => DataType::Number(0.0),
+            _ => return self.runtime_error(Some(&expr.operator), "Expected a number"),
         };
         match expr.operator.token_type {
             TokenType::Minus => VisitorTypes::DataType(Some(right)),
-            TokenType::Bang => VisitorTypes::DataType(Some(DataType::Bool(!self.is_truthy(&right)))),
-            _ => todo!(),
+            TokenType::Bang => {
+                VisitorTypes::DataType(Some(DataType::Bool(!self.is_truthy(&right))))
+            }
+            _ => return self.runtime_error(Some(&expr.operator), "Expected a ! or -"),
         }
     }
 
@@ -124,6 +134,18 @@ impl Interpreter {
             (DataType::Bool(a), DataType::Bool(b)) => a == b,
             (DataType::Nil, DataType::Nil) => true,
             _ => false,
+        }
+    }
+
+    fn runtime_error(&self, token: Option<&Token>, msg: &str) -> VisitorTypes {
+        let token_clone = match token {
+            Some(t) => Some(t.clone()),
+            None => None,
+        };
+
+        VisitorTypes::RunTimeError {
+            token: token_clone,
+            msg: msg.to_string(),
         }
     }
 }
