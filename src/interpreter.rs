@@ -9,6 +9,88 @@ use crate::{
 };
 
 pub struct Interpreter;
+impl Interpreter {
+    pub fn new() -> Self {
+        Self
+    }
+
+    // pub fn interpret(&mut self, expr: &mut dyn Expr) {
+    //     let value = expr.accept(self);
+    //     match value {
+    //         VisitorTypes::DataType(_) => {
+    //             println!("{}", self.stringify(value));
+    //         }
+    //         VisitorTypes::RunTimeError { token, msg } => {
+    //             error::runtime_error(&token, msg.as_str());
+    //         }
+    //         _ => panic!(
+    //             "Unknown visitor type returned.\n This should be an impossible state to be in."
+    //         ),
+    //     }
+    // }
+    pub fn interpret(&mut self, statements: Vec<Box<dyn Stmt>>) {
+        for stmt in statements {
+            self.execute(stmt)
+        }
+    }
+
+    fn execute(&self, stmt: Box<dyn Stmt>) {
+        todo!()
+    }
+
+    fn stringify(&self, visitor_type: VisitorTypes) -> String {
+        let result = match visitor_type {
+            VisitorTypes::DataType(d) => match d {
+                Some(DataType::String(s)) => s,
+                Some(DataType::Number(n)) => {
+                    let mut number = n.to_string();
+                    if number.ends_with(".0") {
+                        number = number.substring(0, number.len() - 2).to_string();
+                    }
+                    number
+                }
+                Some(DataType::Bool(b)) => {
+                    let string = b.to_string();
+                    string.to_owned()
+                }
+                Some(DataType::Nil) => "nil".to_string(),
+                None => "nil".to_string(),
+            },
+            _ => panic!("An error occured during interpretting."),
+        };
+        result
+    }
+
+    fn is_truthy(&self, data_type: &DataType) -> bool {
+        match data_type {
+            DataType::Bool(b) => *b,
+            DataType::Nil => false,
+            _ => true,
+        }
+    }
+
+    fn is_equal(&self, a: &DataType, b: &DataType) -> bool {
+        match (a, b) {
+            (DataType::Number(a), DataType::Number(b)) => a == b,
+            (DataType::String(a), DataType::String(b)) => a == b,
+            (DataType::Bool(a), DataType::Bool(b)) => a == b,
+            (DataType::Nil, DataType::Nil) => true,
+            _ => false,
+        }
+    }
+
+    fn runtime_error(&self, token: Option<&Token>, msg: &str) -> VisitorTypes {
+        let token_clone = match token {
+            Some(t) => Some(t.clone()),
+            None => None,
+        };
+
+        VisitorTypes::RunTimeError {
+            token: token_clone,
+            msg: msg.to_string(),
+        }
+    }
+}
 
 impl ExprVisitor for Interpreter {
     fn visit_assign_expr(&mut self, expr: &Assign) -> VisitorTypes {
@@ -124,6 +206,7 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_grouping_expr(&mut self, expr: &Grouping) -> VisitorTypes {
+        // The book uses an evaluate function to execute this line of code.
         expr.expression.accept(self)
     }
 
@@ -175,76 +258,43 @@ impl ExprVisitor for Interpreter {
     }
 }
 
-impl Interpreter {
-    pub fn new() -> Self {
-        Self
+impl StmtVisitor for Interpreter {
+    fn visit_block_stmt(&mut self, stmt: &Block) -> VisitorTypes {
+        todo!()
     }
 
-    pub fn interpret(&mut self, expr: &mut dyn Expr) {
-        let value = expr.accept(self);
-        match value {
-            VisitorTypes::DataType(_) => {
-                println!("{}", self.stringify(value));
-            }
-            VisitorTypes::RunTimeError { token, msg } => {
-                error::runtime_error(&token, msg.as_str());
-            }
-            _ => panic!(
-                "Unknown visitor type returned.\n This should be an impossible state to be in."
-            ),
-        }
+    fn visit_class_stmt(&mut self, stmt: &Class) -> VisitorTypes {
+        todo!()
     }
 
-    fn stringify(&self, visitor_type: VisitorTypes) -> String {
-        let result = match visitor_type {
-            VisitorTypes::DataType(d) => match d {
-                Some(DataType::String(s)) => s,
-                Some(DataType::Number(n)) => {
-                    let mut number = n.to_string();
-                    if number.ends_with(".0") {
-                        number = number.substring(0, number.len() - 2).to_string();
-                    }
-                    number
-                }
-                Some(DataType::Bool(b)) => {
-                    let string = b.to_string();
-                    string.to_owned()
-                }
-                Some(DataType::Nil) => "nil".to_string(),
-                None => "nil".to_string(),
-            },
-            _ => panic!("An error occured during interpretting."),
-        };
-        result
+    fn visit_expression_stmt(&mut self, stmt: &Expression) -> VisitorTypes {
+        stmt.accept(self);
+        VisitorTypes::Void(())
     }
 
-    fn is_truthy(&self, data_type: &DataType) -> bool {
-        match data_type {
-            DataType::Bool(b) => *b,
-            DataType::Nil => false,
-            _ => true,
-        }
+    fn visit_function_stmt(&mut self, stmt: &Function) -> VisitorTypes {
+        todo!()
     }
 
-    fn is_equal(&self, a: &DataType, b: &DataType) -> bool {
-        match (a, b) {
-            (DataType::Number(a), DataType::Number(b)) => a == b,
-            (DataType::String(a), DataType::String(b)) => a == b,
-            (DataType::Bool(a), DataType::Bool(b)) => a == b,
-            (DataType::Nil, DataType::Nil) => true,
-            _ => false,
-        }
+    fn visit_if_stmt(&mut self, stmt: &If) -> VisitorTypes {
+        todo!()
     }
 
-    fn runtime_error(&self, token: Option<&Token>, msg: &str) -> VisitorTypes {
-        let token_clone = match token {
-            Some(t) => Some(t.clone()),
-            None => None,
-        };
+    fn visit_print_stmt(&mut self, stmt: &Print) -> VisitorTypes {
+        let value = stmt.accept(self);
+        println!("{}", self.stringify(value));
+        VisitorTypes::Void(())
+    }
 
-        VisitorTypes::RunTimeError {
-            token: token_clone,
-            msg: msg.to_string(),
-        }
+    fn visit_return_stmt(&mut self, stmt: &Return) -> VisitorTypes {
+        todo!()
+    }
+
+    fn visit_var_stmt(&mut self, stmt: &Var) -> VisitorTypes {
+        todo!()
+    }
+
+    fn visit_while_stmt(&mut self, stmt: &While) -> VisitorTypes {
+        todo!()
     }
 }
