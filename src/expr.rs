@@ -221,9 +221,7 @@ impl Expr for Variable {
 }
 
 pub trait Stmt {
-    fn accept(&self, visitor: &mut dyn StmtVisitor) -> VisitorTypes
-    where
-        Self: Sized;
+    fn accept(&self, visitor: &mut dyn StmtVisitor) -> VisitorTypes;
 }
 
 pub trait StmtVisitor {

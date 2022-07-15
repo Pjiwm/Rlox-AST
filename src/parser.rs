@@ -2,7 +2,7 @@ use std::io::{self, Error, ErrorKind};
 
 use crate::{
     error::parse_error,
-    expr::{Binary, Expr, Grouping, Literal, Unary},
+    expr::{Binary, Expr, Grouping, Literal, Unary, Stmt, Print, Expression},
     token::{DataType, Token, TokenType},
 };
 
@@ -16,12 +16,37 @@ impl<'a> Parser<'a> {
         Parser { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Result<Box<dyn Expr>, Error> {
-        self.expression()
+    pub fn parse(&mut self) -> Result<Vec<Box<dyn Stmt>>, Error> {
+        let mut statements = Vec::<Box<dyn Stmt>>::new();
+        while !self.is_at_end() {
+            statements.push(self.statement()?);
+        }
+        Ok(statements)
     }
 
     fn expression(&mut self) -> Result<Box<dyn Expr>, Error> {
         self.equality()
+    }
+
+    fn statement(&self) -> Result<Box<dyn Stmt>, Error> {
+        let print_vec = vec![TokenType::Print];
+        if self.matches(&print_vec) {
+            self.print_statement()
+        } else {
+            self.expression_statement()
+        }
+    }
+
+    fn print_statement(&self) -> Result<Box<dyn Stmt>, Error> {
+        let value = self.expression()?;
+        self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
+        Ok(Box::new(Print::new(value)))
+    }
+
+    fn expression_statement(&self) -> Result<Box<dyn Stmt>, Error> {
+        let expr = self.expression()?;
+        self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
+        Ok(Box::new(Expression::new(expr)))
     }
 
     fn equality(&mut self) -> Result<Box<dyn Expr>, Error> {
