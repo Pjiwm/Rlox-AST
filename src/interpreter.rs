@@ -124,10 +124,24 @@ impl ExprVisitor for Interpreter {
                     s.push_str(r.as_str());
                     DataType::String(s)
                 }
+                // This makes it possible to concatinate a number with a string. 
+                // Doing this is easier for the user when they want to print numbers and strings together.
+                (Some(DataType::Number(l)), Some(DataType::String(r))) => {
+                    let mut s = String::new();
+                    s.push_str(l.to_string().as_str());
+                    s.push_str(r.as_str());
+                    DataType::String(s)
+                },
+                (Some(DataType::String(l)), Some(DataType::Number(r))) => {
+                    let mut s = String::new();
+                    s.push_str(l.as_str());
+                    s.push_str(r.to_string().as_str());
+                    DataType::String(s)
+                }
                 _ => {
                     return self.visitor_runtime_error(
                         Some(&expr.operator),
-                        "Operands must be two numbers or two strings.",
+                        "Operands must be a number or string.",
                     );
                 }
             },
