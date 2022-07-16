@@ -22,7 +22,7 @@ impl Token {
             line,
         }
     }
-    pub fn dup(&self) -> Self {
+    pub fn dup(&self) -> Token {
         Token {
             token_type: self.token_type,
             lexeme: self.lexeme.clone(),

@@ -1,8 +1,8 @@
 use std::io::{self, Error, ErrorKind};
 
 use crate::{
+    ast::{Binary, Expr, Expression, Grouping, Literal, Print, Stmt, Unary, Var},
     error::parse_error,
-    ast::{Binary, Expr, Grouping, Literal, Unary, Stmt, Print, Expression},
     token::{DataType, Token, TokenType},
 };
 
@@ -12,20 +12,34 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(tokens: &'a [Token]) -> Self {
+    pub fn new(tokens: &[Token]) -> Parser {
         Parser { tokens, current: 0 }
     }
 
     pub fn parse(&mut self) -> Result<Vec<Box<dyn Stmt>>, Error> {
         let mut statements = Vec::<Box<dyn Stmt>>::new();
         while !self.is_at_end() {
-            statements.push(self.statement()?);
+            statements.push(self.decleration()?);
         }
         Ok(statements)
     }
 
     fn expression(&mut self) -> Result<Box<dyn Expr>, Error> {
         self.equality()
+    }
+
+    fn decleration(&mut self) -> Result<Box<dyn Stmt>, Error> {
+        let var_vec = vec![TokenType::Var];
+        if self.matches(&var_vec) {
+            return self.var_decleration();
+        }
+        match self.statement() {
+            Ok(stmt) => Ok(stmt),
+            Err(err) => {
+                self.synchronize();
+                Err(err)
+            }
+        }
     }
 
     fn statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
@@ -37,10 +51,25 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn print_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
+    fn print_statement(&self) -> Result<Box<dyn Stmt>, Error> {
+        // TODO fix this tomorrow. Calling a mutable reference to self like 5 times here, only oonce is allowed.
         let value = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
         Ok(Box::new(Print::new(value)))
+    }
+
+    fn var_decleration<'b>(&mut self) -> Result<Box<dyn Stmt>, Error> {
+        let name = self.consume(TokenType::Identifier, "Expect variable name.")?;
+        let equal_vec = vec![TokenType::Equal];
+        let initializer = if self.matches(&equal_vec) {
+            drop(equal_vec);
+            Some(self.expression()?)
+        } else {
+            drop(equal_vec);
+            None
+        };
+        self.consume(TokenType::Semicolon, "Expect ';' after variable declaration.")?;
+        Ok(Box::new(Var::new(name.dup(), initializer)))
     }
 
     fn expression_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
@@ -179,10 +208,11 @@ impl<'a> Parser<'a> {
                 | TokenType::Return => {
                     return;
                 }
-                // TODO self.advance might has to be used there followed by a return.
-                _ => {}
+                _ => {
+                    self.advance();
+                    ()
+                }
             }
-            self.advance();
         }
     }
 
@@ -209,6 +239,6 @@ impl<'a> Parser<'a> {
     }
 
     fn previous(&self) -> &Token {
-        &self.tokens.get(self.current -1).unwrap()
+        &self.tokens.get(self.current - 1).unwrap()
     }
 }
