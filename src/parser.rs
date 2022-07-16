@@ -28,7 +28,7 @@ impl<'a> Parser<'a> {
         self.equality()
     }
 
-    fn statement(&self) -> Result<Box<dyn Stmt>, Error> {
+    fn statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
         let print_vec = vec![TokenType::Print];
         if self.matches(&print_vec) {
             self.print_statement()
@@ -37,13 +37,13 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn print_statement(&self) -> Result<Box<dyn Stmt>, Error> {
+    fn print_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
         let value = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
         Ok(Box::new(Print::new(value)))
     }
 
-    fn expression_statement(&self) -> Result<Box<dyn Stmt>, Error> {
+    fn expression_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
         Ok(Box::new(Expression::new(expr)))

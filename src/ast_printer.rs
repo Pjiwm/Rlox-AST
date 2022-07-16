@@ -13,6 +13,7 @@ impl AstPrinter {
             VisitorTypes::RunTimeError { .. } => {
                 "Ran into Run time error: Incorrect expression".to_string()
             }
+            VisitorTypes::Void(_) => "Void".to_string(),
         };
         return_string
     }
@@ -29,6 +30,7 @@ impl AstPrinter {
                 VisitorTypes::RunTimeError { .. } => {
                     "Ran into Run time error: Incorrect expression".to_string()
                 }
+                VisitorTypes::Void(_) => "Void".to_string(),
             };
             s.push_str(expr_str.as_str());
         }

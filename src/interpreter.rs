@@ -1,41 +1,23 @@
-use std::num;
-
 use substring::Substring;
 
 use crate::{
-    error,
-    expr::{self, *},
+    expr::*,
     token::{DataType, Token, TokenType},
 };
-
 pub struct Interpreter;
 impl Interpreter {
     pub fn new() -> Self {
         Self
     }
 
-    // pub fn interpret(&mut self, expr: &mut dyn Expr) {
-    //     let value = expr.accept(self);
-    //     match value {
-    //         VisitorTypes::DataType(_) => {
-    //             println!("{}", self.stringify(value));
-    //         }
-    //         VisitorTypes::RunTimeError { token, msg } => {
-    //             error::runtime_error(&token, msg.as_str());
-    //         }
-    //         _ => panic!(
-    //             "Unknown visitor type returned.\n This should be an impossible state to be in."
-    //         ),
-    //     }
-    // }
     pub fn interpret(&mut self, statements: Vec<Box<dyn Stmt>>) {
         for stmt in statements {
-            self.execute(stmt)
+            self.execute(stmt);
         }
     }
 
-    fn execute(&self, stmt: Box<dyn Stmt>) {
-        todo!()
+    fn execute(&mut self, stmt: Box<dyn Stmt>) {
+        stmt.accept(self);
     }
 
     fn stringify(&self, visitor_type: VisitorTypes) -> String {
@@ -268,7 +250,7 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_expression_stmt(&mut self, stmt: &Expression) -> VisitorTypes {
-        stmt.accept(self);
+        stmt.expression.accept(self);
         VisitorTypes::Void(())
     }
 
@@ -281,7 +263,7 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_print_stmt(&mut self, stmt: &Print) -> VisitorTypes {
-        let value = stmt.accept(self);
+        let value = stmt.expression.accept(self);
         println!("{}", self.stringify(value));
         VisitorTypes::Void(())
     }

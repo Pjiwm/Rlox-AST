@@ -66,15 +66,15 @@ fn run(source: &str) -> io::Result<()> {
     let tokens = token_scanner.scan_tokens();
     let mut parser = parser::Parser::new(&tokens);
     // If we have an error during parsing, we want to print it and exit.
-    let mut expression = match parser.parse() {
+    let statements = match parser.parse() {
         Ok(expr) => expr,
         Err(_) => {
             return Ok(());
         }
     };
-
+    // println!("{}", statements.len());
     let mut interpreter = Interpreter::new();
-    interpreter.interpret(expression.as_mut());
+    interpreter.interpret(statements);
 
     // let mut printer = ast_printer::AstPrinter::new();
     // let expression_str = printer.print(expression);

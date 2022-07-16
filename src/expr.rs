@@ -277,7 +277,7 @@ impl Stmt for Class {
 }
 
 pub struct Expression {
-    expression: Box<dyn Expr>,
+    pub expression: Box<dyn Expr>,
 }
 impl Expression {
     pub fn new(expression: Box<dyn Expr>) -> Self {
@@ -331,7 +331,7 @@ impl Stmt for If {
 }
 
 pub struct Print {
-    expression: Box<dyn Expr>,
+    pub expression: Box<dyn Expr>,
 }
 impl Print {
     pub fn new(expression: Box<dyn Expr>) -> Self {
