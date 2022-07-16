@@ -179,7 +179,7 @@ impl Expr for Super {
 }
 
 pub struct This {
-    keyword: Token,
+    pub keyword: Token,
 }
 impl This {
     pub fn new(keyword: Token) -> Self {
@@ -238,7 +238,7 @@ pub trait StmtVisitor {
 }
 
 pub struct Block {
-    statements: Vec<Box<dyn Stmt>>,
+    pub statements: Vec<Box<dyn Stmt>>,
 }
 impl Block {
     pub fn new(statements: Vec<Box<dyn Stmt>>) -> Self {
@@ -252,10 +252,10 @@ impl Stmt for Block {
 }
 
 pub struct Class {
-    name: Token,
+    pub name: Token,
     // Check if these works, cause they might not...
-    methods: Vec<Box<Function>>,
-    super_class: Option<Box<Variable>>,
+    pub methods: Vec<Box<Function>>,
+    pub super_class: Option<Box<Variable>>,
 }
 impl Class {
     pub fn new(
@@ -291,9 +291,9 @@ impl Stmt for Expression {
 }
 
 pub struct Function {
-    name: Token,
-    param: Vec<Token>,
-    body: Box<dyn Stmt>,
+    pub name: Token,
+    pub param: Vec<Token>,
+    pub body: Box<dyn Stmt>,
 }
 impl Function {
     pub fn new(name: Token, param: Vec<Token>, body: Box<dyn Stmt>) -> Self {
@@ -307,9 +307,9 @@ impl Stmt for Function {
 }
 
 pub struct If {
-    condition: Box<dyn Expr>,
-    then_branch: Box<dyn Stmt>,
-    else_branch: Option<Box<dyn Stmt>>,
+    pub condition: Box<dyn Expr>,
+    pub then_branch: Box<dyn Stmt>,
+    pub else_branch: Option<Box<dyn Stmt>>,
 }
 impl If {
     pub fn new(
@@ -345,9 +345,9 @@ impl Stmt for Print {
 }
 
 pub struct Return {
-    keyword: Token,
+    pub keyword: Token,
     // TODO For later: Find out if option is really needed?
-    value: Option<Box<dyn Expr>>,
+    pub value: Option<Box<dyn Expr>>,
 }
 
 impl Return {
@@ -362,8 +362,8 @@ impl Stmt for Return {
 }
 
 pub struct Var {
-    name: Token,
-    initializer: Option<Box<dyn Expr>>,
+    pub name: Token,
+    pub initializer: Option<Box<dyn Expr>>,
 }
 impl Var {
     pub fn new(name: Token, initializer: Option<Box<dyn Expr>>) -> Self {
@@ -377,8 +377,8 @@ impl Stmt for Var {
 }
 
 pub struct While {
-    condition: Box<dyn Expr>,
-    body: Box<dyn Stmt>,
+    pub condition: Box<dyn Expr>,
+    pub body: Box<dyn Stmt>,
 }
 impl While {
     pub fn new(condition: Box<dyn Expr>, body: Box<dyn Stmt>) -> Self {

@@ -168,12 +168,6 @@ impl ExprVisitor for Interpreter {
                 (None, None) => DataType::Bool(true),
                 (Some(_), None) => DataType::Bool(false),
                 (None, Some(_)) => DataType::Bool(false),
-                _ => {
-                    return self.visitor_runtime_error(
-                        Some(&expr.operator),
-                        "Expected a binary operation.",
-                    );
-                }
             },
             TokenType::Greater => match (left, right) {
                 (Some(DataType::Bool(l)), Some(DataType::Bool(r))) => DataType::Bool(l > r),

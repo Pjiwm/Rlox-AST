@@ -85,8 +85,8 @@ fn run(source: &str) -> io::Result<()> {
 fn _demo_ast() {
     // let expression = _binary_expression_multi();
     let expression = _binary_expression_sum();
-    let mut printer = ast_printer::AstPrinter::new();
-    let expression_str = printer.print(Box::new(expression));
+    let mut printer = ast_printer::AstPrinter::_new();
+    let expression_str = printer._print(Box::new(expression));
     println!("{}", expression_str);
 }
 

@@ -2,11 +2,11 @@ use crate::{expr::*, token::DataType};
 
 pub struct AstPrinter;
 impl AstPrinter {
-    pub fn new() -> Self {
+    pub fn _new() -> Self {
         Self
     }
 
-    pub fn print(&mut self, expr: Box<dyn Expr>) -> String {
+    pub fn _print(&mut self, expr: Box<dyn Expr>) -> String {
         let return_string = match expr.accept(self) {
             VisitorTypes::String(s) => s,
             VisitorTypes::DataType(_) => "Incorrect expression".to_string(),
