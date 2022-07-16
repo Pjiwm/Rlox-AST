@@ -4,13 +4,13 @@ use std::{
     process, str,
 };
 
-use expr::{Binary, Grouping, Literal, Unary};
+use ast::{Binary, Grouping, Literal, Unary};
 use token::{DataType, Token, TokenType};
 
 use crate::interpreter::Interpreter;
 mod ast_printer;
 mod error;
-mod expr;
+mod ast;
 mod interpreter;
 mod parser;
 mod scanner;

@@ -2,7 +2,7 @@ use std::io::{self, Error, ErrorKind};
 
 use crate::{
     error::parse_error,
-    expr::{Binary, Expr, Grouping, Literal, Unary, Stmt, Print, Expression},
+    ast::{Binary, Expr, Grouping, Literal, Unary, Stmt, Print, Expression},
     token::{DataType, Token, TokenType},
 };
 
