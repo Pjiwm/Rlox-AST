@@ -131,10 +131,7 @@ impl ExprVisitor for Interpreter {
             TokenType::Plus => match (left, right) {
                 (Some(DataType::Number(l)), Some(DataType::Number(r))) => DataType::Number(l + r),
                 (Some(DataType::String(l)), Some(DataType::String(r))) => {
-                    let mut s = String::new();
-                    s.push_str(l.as_str());
-                    s.push_str(r.as_str());
-                    DataType::String(s)
+                    self.concatinate(l.as_str(), r.as_str())
                 }
                 // This makes it possible to concatinate a number with a string.
                 // Doing this is easier for the user when they want to print numbers and strings together.
