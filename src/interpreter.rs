@@ -159,24 +159,24 @@ impl ExprVisitor for Interpreter {
                     self.concatinate(l.to_string().as_str(), r.to_string().as_str())
                 }
                 // Concatinating Nil with a string
-                (Some(DataType::Nil), Some(DataType::String(r))) => {
+                (None, Some(DataType::String(r))) => {
                     self.concatinate("nil", r.as_str())
                 }
-                (Some(DataType::String(l)), Some(DataType::Nil)) => {
+                (Some(DataType::String(l)), None) => {
                     self.concatinate(l.as_str(), "nil")
                 }
                 // Concatinating Nil with a number
-                (Some(DataType::Nil), Some(DataType::Number(r))) => {
+                (None, Some(DataType::Number(r))) => {
                     self.concatinate("nil", r.to_string().as_str())
                 }
-                (Some(DataType::Number(l)), Some(DataType::Nil)) => {
+                (Some(DataType::Number(l)), None) => {
                     self.concatinate(l.to_string().as_str(), "nil")
                 }
                 // Concatinating Nil with a bool
-                (Some(DataType::Nil), Some(DataType::Bool(r))) => {
+                (None, Some(DataType::Bool(r))) => {
                     self.concatinate("nil", r.to_string().as_str())
                 }
-                (Some(DataType::Bool(l)), Some(DataType::Nil)) => {
+                (Some(DataType::Bool(l)), None) => {
                     self.concatinate(l.to_string().as_str(), "nil")
                 }
                 _ => {
