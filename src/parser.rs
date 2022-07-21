@@ -51,24 +51,24 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn print_statement(&self) -> Result<Box<dyn Stmt>, Error> {
-        // TODO fix this tomorrow. Calling a mutable reference to self like 5 times here, only oonce is allowed.
+    fn print_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
         let value = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
         Ok(Box::new(Print::new(value)))
     }
 
-    fn var_decleration<'b>(&mut self) -> Result<Box<dyn Stmt>, Error> {
+    fn var_decleration(&mut self) -> Result<Box<dyn Stmt>, Error> {
         let name = self.consume(TokenType::Identifier, "Expect variable name.")?;
         let equal_vec = vec![TokenType::Equal];
         let initializer = if self.matches(&equal_vec) {
-            drop(equal_vec);
             Some(self.expression()?)
         } else {
-            drop(equal_vec);
             None
         };
-        self.consume(TokenType::Semicolon, "Expect ';' after variable declaration.")?;
+        self.consume(
+            TokenType::Semicolon,
+            "Expect ';' after variable declaration.",
+        )?;
         Ok(Box::new(Var::new(name.dup(), initializer)))
     }
 
@@ -171,7 +171,7 @@ impl<'a> Parser<'a> {
 
     fn matches(&mut self, types: &Vec<TokenType>) -> bool {
         for token_type in types {
-            if self.check(token_type.clone()) {
+            if self.check(*token_type) {
                 self.advance();
                 return true;
             }
@@ -179,9 +179,9 @@ impl<'a> Parser<'a> {
         return false;
     }
 
-    fn consume(&mut self, token_type: TokenType, message: &str) -> Result<&Token, Error> {
+    fn consume(&mut self, token_type: TokenType, message: &str) -> Result<Token, Error> {
         if self.check(token_type) {
-            Ok(self.advance())
+            Ok(self.advance().dup())
         } else {
             Err(self.parse_error(self.peek(), message))
         }
@@ -235,10 +235,10 @@ impl<'a> Parser<'a> {
     }
 
     fn peek(&self) -> &Token {
-        &self.tokens[self.current]
+        self.tokens.get(self.current).unwrap()
     }
 
     fn previous(&self) -> &Token {
-        &self.tokens.get(self.current - 1).unwrap()
+        self.tokens.get(self.current - 1).unwrap()
     }
 }
