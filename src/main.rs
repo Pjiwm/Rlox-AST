@@ -15,6 +15,7 @@ mod interpreter;
 mod parser;
 mod scanner;
 mod token;
+mod environment;
 #[macro_use]
 extern crate lazy_static;
 

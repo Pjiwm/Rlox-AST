@@ -1,7 +1,7 @@
 use std::io::{self, Error, ErrorKind};
 
 use crate::{
-    ast::{Binary, Expr, Expression, Grouping, Literal, Print, Stmt, Unary, Var},
+    ast::{Binary, Expr, Expression, Grouping, Literal, Print, Stmt, Unary, Var, Variable},
     error::parse_error,
     token::{DataType, Token, TokenType},
 };
@@ -157,6 +157,10 @@ impl<'a> Parser<'a> {
             return Ok(Box::new(Literal::new(Some(
                 data_type.clone().literal.unwrap(),
             ))));
+        }
+        let identifier_vec = vec![TokenType::Identifier];
+        if self.matches(&identifier_vec) {
+            return Ok(Box::new(Variable::new(self.previous().dup())));
         }
 
         let left_paren_vec = vec![TokenType::LeftParen];

@@ -3,14 +3,19 @@ use std::io::{self, Error, ErrorKind};
 use substring::Substring;
 
 use crate::{
-    error,
     ast::*,
+    environment::Environment,
+    error,
     token::{DataType, Token, TokenType},
 };
-pub struct Interpreter;
+pub struct Interpreter {
+    environment: Environment,
+}
 impl Interpreter {
-    pub fn new() -> Self {
-        Self
+    pub fn new() -> Interpreter {
+        Interpreter {
+            environment: Environment::new(),
+        }
     }
 
     pub fn interpret(&mut self, statements: Vec<Box<dyn Stmt>>) {
@@ -35,21 +40,21 @@ impl Interpreter {
 
     fn stringify_helper(&self, data_type: Option<DataType>) -> String {
         let result = match data_type {
-                Some(DataType::String(s)) => s,
-                Some(DataType::Number(n)) => {
-                    let mut number = n.to_string();
-                    if number.ends_with(".0") {
-                        number = number.substring(0, number.len() - 2).to_string();
-                    }
-                    number
+            Some(DataType::String(s)) => s,
+            Some(DataType::Number(n)) => {
+                let mut number = n.to_string();
+                if number.ends_with(".0") {
+                    number = number.substring(0, number.len() - 2).to_string();
                 }
-                Some(DataType::Bool(b)) => {
-                    let string = b.to_string();
-                    string.to_owned()
-                }
-                Some(DataType::Nil) => "nil".to_string(),
-                None => "nil".to_string(),
-            };
+                number
+            }
+            Some(DataType::Bool(b)) => {
+                let string = b.to_string();
+                string.to_owned()
+            }
+            Some(DataType::Nil) => "nil".to_string(),
+            None => "nil".to_string(),
+        };
         result
     }
 
@@ -81,6 +86,13 @@ impl Interpreter {
             token: token_clone,
             msg: msg.to_string(),
         }
+    }
+
+    fn concatinate(&self, l: &str, r: &str) -> DataType {
+        let mut s = String::new();
+        s.push_str(l);
+        s.push_str(r);
+        DataType::String(s)
     }
 
     fn runtime_error(&self, token: &Option<Token>, message: &str) -> Error {
@@ -124,19 +136,48 @@ impl ExprVisitor for Interpreter {
                     s.push_str(r.as_str());
                     DataType::String(s)
                 }
-                // This makes it possible to concatinate a number with a string. 
+                // This makes it possible to concatinate a number with a string.
                 // Doing this is easier for the user when they want to print numbers and strings together.
                 (Some(DataType::Number(l)), Some(DataType::String(r))) => {
-                    let mut s = String::new();
-                    s.push_str(l.to_string().as_str());
-                    s.push_str(r.as_str());
-                    DataType::String(s)
-                },
+                    self.concatinate(l.to_string().as_str(), r.as_str())
+                }
                 (Some(DataType::String(l)), Some(DataType::Number(r))) => {
-                    let mut s = String::new();
-                    s.push_str(l.as_str());
-                    s.push_str(r.to_string().as_str());
-                    DataType::String(s)
+                    self.concatinate(l.as_str(), r.to_string().as_str())
+                }
+                // Concatinating a string with a bool
+                (Some(DataType::String(l)), Some(DataType::Bool(r))) => {
+                    self.concatinate(l.as_str(), r.to_string().as_str())
+                }
+                (Some(DataType::Bool(l)), Some(DataType::String(r))) => {
+                    self.concatinate(l.to_string().as_str(), r.as_str())
+                }
+                // Concatinating a bool with a number
+                (Some(DataType::Bool(l)), Some(DataType::Number(r))) => {
+                    self.concatinate(l.to_string().as_str(), r.to_string().as_str())
+                }
+                (Some(DataType::Number(l)), Some(DataType::Bool(r))) => {
+                    self.concatinate(l.to_string().as_str(), r.to_string().as_str())
+                }
+                // Concatinating Nil with a string
+                (Some(DataType::Nil), Some(DataType::String(r))) => {
+                    self.concatinate("nil", r.as_str())
+                }
+                (Some(DataType::String(l)), Some(DataType::Nil)) => {
+                    self.concatinate(l.as_str(), "nil")
+                }
+                // Concatinating Nil with a number
+                (Some(DataType::Nil), Some(DataType::Number(r))) => {
+                    self.concatinate("nil", r.to_string().as_str())
+                }
+                (Some(DataType::Number(l)), Some(DataType::Nil)) => {
+                    self.concatinate(l.to_string().as_str(), "nil")
+                }
+                // Concatinating Nil with a bool
+                (Some(DataType::Nil), Some(DataType::Bool(r))) => {
+                    self.concatinate("nil", r.to_string().as_str())
+                }
+                (Some(DataType::Bool(l)), Some(DataType::Nil)) => {
+                    self.concatinate(l.to_string().as_str(), "nil")
                 }
                 _ => {
                     return self.visitor_runtime_error(
@@ -274,7 +315,10 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_variable_expr(&mut self, expr: &Variable) -> VisitorTypes {
-        todo!()
+        match self.environment.get(&expr.name.lexeme) {
+            Some(v) => VisitorTypes::DataType(Some(v.clone())),
+            None => self.visitor_runtime_error(Some(&expr.name), "Variable is not defined."),
+        }
     }
 }
 
@@ -303,8 +347,8 @@ impl StmtVisitor for Interpreter {
     fn visit_print_stmt(&mut self, stmt: &Print) -> VisitorTypes {
         let value = stmt.expression.accept(self);
         match self.stringify(value) {
-            Ok(s) => println!("{}", s),	
-            Err(_) => {},
+            Ok(s) => println!("{}", s),
+            Err(_) => {}
         }
         VisitorTypes::Void(())
     }
@@ -314,7 +358,22 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_var_stmt(&mut self, stmt: &Var) -> VisitorTypes {
-        todo!()
+        let mut data_type = None;
+        if let Some(initializer) = &stmt.initializer {
+            data_type = match Some(initializer.accept(self)) {
+                Some(v) => match v {
+                    VisitorTypes::DataType(d) => d,
+                    _ => return self.visitor_runtime_error(Some(&stmt.name), "Expected a value."),
+                },
+                None => return self.visitor_runtime_error(Some(&stmt.name), "Expected a value."),
+            }
+        }
+        let value = match data_type {
+            Some(v) => v,
+            None => DataType::Nil,
+        };
+        self.environment.define(stmt.name.lexeme.clone(), value);
+        VisitorTypes::Void(())
     }
 
     fn visit_while_stmt(&mut self, stmt: &While) -> VisitorTypes {
