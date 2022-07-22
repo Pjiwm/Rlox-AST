@@ -289,10 +289,10 @@ pub trait StmtVisitor {
 }
 
 pub struct Block {
-    pub statements: Vec<Box<dyn Stmt>>,
+    pub statements: Box<Vec<Box<dyn Stmt>>>,
 }
 impl Block {
-    pub fn new(statements: Vec<Box<dyn Stmt>>) -> Self {
+    pub fn new(statements: Box<Vec<Box<dyn Stmt>>>) -> Self {
         Self { statements }
     }
 }

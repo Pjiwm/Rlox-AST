@@ -6,12 +6,21 @@ use crate::{
 };
 
 pub struct Environment {
+    pub enclosing: Option<Box<Environment>>,
     pub values: HashMap<String, DataType>,
 }
 
 impl Environment {
     pub fn new() -> Self {
         Self {
+            values: HashMap::new(),
+            enclosing: None,
+        }
+    }
+
+    pub fn new_enclosing(enclosing: Box<Environment>) -> Self {
+        Self {
+            enclosing: Some(enclosing),
             values: HashMap::new(),
         }
     }
@@ -20,8 +29,18 @@ impl Environment {
         self.values.insert(name, value);
     }
 
-    pub fn get(&self, name: &String) -> Option<&DataType> {
-        self.values.get(name)
+    pub fn get(&self, name: Token) -> VisitorTypes {
+        if self.values.contains_key(&name.lexeme) {
+            let value = Some(self.values[&name.lexeme].dup());
+            return VisitorTypes::DataType(value);
+        }
+        if let Some(ref env) = self.enclosing {
+            return env.get(name);
+        }
+        VisitorTypes::RunTimeError {
+            token: Some(name.dup()),
+            msg: format!("Variable {} is not defined.", name.lexeme),
+        }
     }
 
     pub fn assign(&mut self, name: Token, value: DataType) -> VisitorTypes {

@@ -317,13 +317,7 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_variable_expr(&mut self, expr: &Variable) -> VisitorTypes {
-        match self.environment.get(&expr.name.lexeme) {
-            Some(v) => VisitorTypes::DataType(Some(v.clone())),
-            None => self.visitor_runtime_error(
-                Some(&expr.name),
-                format!("Variable '{}' is not defined.", expr.name.lexeme).as_str(),
-            ),
-        }
+        self.environment.get(expr.name.dup())
     }
 }
 
