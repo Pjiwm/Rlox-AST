@@ -153,51 +153,10 @@ impl ExprVisitor for Interpreter {
         let calculation = match expr.operator.token_type {
             // There's extra logic for strings, this is so strings can be concatinated with the + operator.
             TokenType::Plus => match (left, right) {
-                (Some(DataType::Number(l)), Some(DataType::Number(r))) => DataType::Number(l + r),
-                (Some(DataType::String(l)), Some(DataType::String(r))) => {
-                    self.concatinate(l.as_str(), r.as_str())
-                }
-                // This makes it possible to concatinate a number with a string.
-                // Doing this is easier for the user when they want to print numbers and strings together.
-                (Some(DataType::Number(l)), Some(DataType::String(r))) => {
-                    self.concatinate(l.to_string().as_str(), r.as_str())
-                }
-                (Some(DataType::String(l)), Some(DataType::Number(r))) => {
-                    self.concatinate(l.as_str(), r.to_string().as_str())
-                }
-                // Concatinating a string with a bool
-                (Some(DataType::String(l)), Some(DataType::Bool(r))) => {
-                    self.concatinate(l.as_str(), r.to_string().as_str())
-                }
-                (Some(DataType::Bool(l)), Some(DataType::String(r))) => {
-                    self.concatinate(l.to_string().as_str(), r.as_str())
-                }
-                // Concatinating a bool with a number
-                (Some(DataType::Bool(l)), Some(DataType::Number(r))) => {
-                    self.concatinate(l.to_string().as_str(), r.to_string().as_str())
-                }
-                (Some(DataType::Number(l)), Some(DataType::Bool(r))) => {
-                    self.concatinate(l.to_string().as_str(), r.to_string().as_str())
-                }
-                // Concatinating Nil with a string
-                (None, Some(DataType::String(r))) => self.concatinate("nil", r.as_str()),
-                (Some(DataType::String(l)), None) => self.concatinate(l.as_str(), "nil"),
-                // Concatinating Nil with a number
-                (None, Some(DataType::Number(r))) => {
-                    self.concatinate("nil", r.to_string().as_str())
-                }
-                (Some(DataType::Number(l)), None) => {
-                    self.concatinate(l.to_string().as_str(), "nil")
-                }
-                // Concatinating Nil with a bool
-                (None, Some(DataType::Bool(r))) => self.concatinate("nil", r.to_string().as_str()),
-                (Some(DataType::Bool(l)), None) => self.concatinate(l.to_string().as_str(), "nil"),
-                _ => {
-                    return self.visitor_runtime_error(
-                        Some(&expr.operator),
-                        "Operands must be a number or string.",
-                    );
-                }
+                (None, None) => self.concatinate("nil", "nil"),
+                (None, Some(r)) => self.concatinate("nil", &r.to_string()),
+                (Some(l), None) => self.concatinate(&l.to_string(), "nil"),
+                (Some(l), Some(r)) => self.concatinate(&l.to_string(), &r.to_string()),
             },
             TokenType::Minus => match (left, right) {
                 (Some(DataType::Number(l)), Some(DataType::Number(r))) => DataType::Number(l - r),

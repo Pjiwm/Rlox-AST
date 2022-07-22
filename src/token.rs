@@ -94,4 +94,13 @@ impl DataType {
             DataType::Nil => DataType::Nil,
         }
     }
+
+    pub fn to_string(&self) -> String {
+        match self {
+            DataType::String(s) => s.clone(),
+            DataType::Number(n) => n.to_string(),
+            DataType::Bool(b) => b.to_string(),
+            DataType::Nil => "nil".to_string(),
+        }
+    }
 }
