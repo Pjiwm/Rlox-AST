@@ -1,10 +1,13 @@
-use std::io::{self, Error, ErrorKind};
+use std::{
+    borrow::Borrow,
+    io::{self, Error, ErrorKind},
+};
 
 use substring::Substring;
 
 use crate::{
     ast::*,
-    environment::Environment,
+    environment::{self, Environment},
     error,
     token::{DataType, Token, TokenType},
 };
@@ -20,12 +23,20 @@ impl Interpreter {
 
     pub fn interpret(&mut self, statements: Vec<Box<dyn Stmt>>) {
         for stmt in statements {
-            self.execute(stmt);
+            self.execute(&stmt);
         }
     }
 
-    fn execute(&mut self, stmt: Box<dyn Stmt>) {
+    fn execute(&mut self, stmt: &Box<dyn Stmt>) {
         stmt.accept(self);
+    }
+
+    fn execute_block(&mut self, statements: &Box<Vec<Box<dyn Stmt>>>, environment: Environment) {
+        let previous = environment;
+        for stmt in statements.iter() {
+            self.execute(stmt.clone());
+        }
+        self.environment = previous;
     }
 
     fn stringify(&self, visitor_type: VisitorTypes) -> Result<String, Error> {
@@ -323,7 +334,11 @@ impl ExprVisitor for Interpreter {
 
 impl StmtVisitor for Interpreter {
     fn visit_block_stmt(&mut self, stmt: &Block) -> VisitorTypes {
-        todo!()
+        self.execute_block(
+            &stmt.statements,
+            Environment::new_enclosing(Box::new(self.environment.borrow().clone())),
+        );
+        VisitorTypes::Void(())
     }
 
     fn visit_class_stmt(&mut self, stmt: &Class) -> VisitorTypes {

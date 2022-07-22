@@ -287,7 +287,6 @@ pub trait StmtVisitor {
     fn visit_var_stmt(&mut self, stmt: &Var) -> VisitorTypes;
     fn visit_while_stmt(&mut self, stmt: &While) -> VisitorTypes;
 }
-
 pub struct Block {
     pub statements: Box<Vec<Box<dyn Stmt>>>,
 }

@@ -1,7 +1,10 @@
 use std::io::{self, Error, ErrorKind};
 
 use crate::{
-    ast::{Assign, Binary, Expr, Expression, Grouping, Literal, Print, Stmt, Unary, Var, Variable},
+    ast::{
+        Assign, Binary, Block, Expr, Expression, Grouping, Literal, Print, Stmt, Unary, Var,
+        Variable,
+    },
     error::parse_error,
     token::{DataType, Token, TokenType},
 };
@@ -44,8 +47,11 @@ impl<'a> Parser<'a> {
 
     fn statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
         let print_vec = vec![TokenType::Print];
+        let block_vec = vec![TokenType::LeftBrace];
         if self.matches(&print_vec) {
             self.print_statement()
+        } else if self.matches(&block_vec) {
+            Ok(Box::new(Block::new(self.block()?)))
         } else {
             self.expression_statement()
         }
@@ -76,6 +82,16 @@ impl<'a> Parser<'a> {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
         Ok(Box::new(Expression::new(expr)))
+    }
+
+    fn block(&mut self) -> Result<Box<Vec<Box<dyn Stmt>>>, Error> {
+        let mut statements = Vec::<Box<dyn Stmt>>::new();
+        while !self.check(TokenType::RightBrace) && !self.is_at_end() {
+            statements.push(self.decleration()?);
+        }
+
+        self.consume(TokenType::RightBrace, "Expect '}' after block.")?;
+        Ok(Box::new(statements))
     }
 
     fn assignment(&mut self) -> Result<Box<dyn Expr>, Error> {
