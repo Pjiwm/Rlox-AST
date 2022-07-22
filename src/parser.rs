@@ -1,7 +1,7 @@
 use std::io::{self, Error, ErrorKind};
 
 use crate::{
-    ast::{Binary, Expr, Expression, Grouping, Literal, Print, Stmt, Unary, Var, Variable},
+    ast::{Assign, Binary, Expr, Expression, Grouping, Literal, Print, Stmt, Unary, Var, Variable},
     error::parse_error,
     token::{DataType, Token, TokenType},
 };
@@ -25,7 +25,7 @@ impl<'a> Parser<'a> {
     }
 
     fn expression(&mut self) -> Result<Box<dyn Expr>, Error> {
-        self.equality()
+        self.assignment()
     }
 
     fn decleration(&mut self) -> Result<Box<dyn Stmt>, Error> {
@@ -76,6 +76,20 @@ impl<'a> Parser<'a> {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
         Ok(Box::new(Expression::new(expr)))
+    }
+
+    fn assignment(&mut self) -> Result<Box<dyn Expr>, Error> {
+        let expr = self.equality()?;
+        let equal_vec = vec![TokenType::Equal];
+        if self.matches(&equal_vec) {
+            let equals = self.previous().dup();
+            let value = self.assignment()?;
+            match expr.as_any().downcast_ref::<Variable>() {
+                Some(v) => return Ok(Box::new(Assign::new(v.name.dup(), value))),
+                None => return Err(self.parse_error(&equals, "Invalid assignment target.")),
+            }
+        }
+        Ok(expr)
     }
 
     fn equality(&mut self) -> Result<Box<dyn Expr>, Error> {

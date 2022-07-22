@@ -105,6 +105,6 @@ impl ExprVisitor for AstPrinter {
 
     fn visit_assign_expr(&mut self, expr: &Assign) -> VisitorTypes {
         let expressions = vec![expr.value.as_ref()];
-        self.paranthesize(&expr.name, expressions)
+        self.paranthesize(&expr.name.lexeme, expressions)
     }
 }

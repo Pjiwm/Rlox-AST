@@ -1,13 +1,16 @@
+use std::any::Any;
+
 use crate::token::{DataType, Token};
 
 pub trait Expr {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes;
+    fn as_any(&self) -> &dyn Any;
 }
 pub enum VisitorTypes {
     String(String),
     DataType(Option<DataType>),
     RunTimeError { token: Option<Token>, msg: String },
-    Void(())
+    Void(()),
 }
 
 pub trait ExprVisitor {
@@ -26,17 +29,21 @@ pub trait ExprVisitor {
 }
 
 pub struct Assign {
-    pub name: String,
+    pub name: Token,
     pub value: Box<dyn Expr>,
 }
 impl Assign {
-    pub fn new(name: String, value: Box<dyn Expr>) -> Self {
+    pub fn new(name: Token, value: Box<dyn Expr>) -> Self {
         Self { name, value }
     }
 }
 impl Expr for Assign {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes {
         visitor.visit_assign_expr(self)
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -58,6 +65,10 @@ impl Expr for Binary {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes {
         visitor.visit_binary_expr(self)
     }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct Call {
@@ -78,6 +89,10 @@ impl Expr for Call {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes {
         visitor.visit_call_expr(self)
     }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct Get {
@@ -93,6 +108,10 @@ impl Expr for Get {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes {
         visitor.visit_get_expr(self)
     }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct Grouping {
@@ -107,6 +126,10 @@ impl Expr for Grouping {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes {
         visitor.visit_grouping_expr(self)
     }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct Literal {
@@ -120,6 +143,10 @@ impl Literal {
 impl Expr for Literal {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes {
         visitor.visit_literal_expr(self)
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -141,6 +168,10 @@ impl Expr for Logical {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes {
         visitor.visit_logical_expr(self)
     }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct Set {
@@ -161,6 +192,10 @@ impl Expr for Set {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes {
         visitor.visit_set_expr(self)
     }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct Super {
@@ -176,6 +211,10 @@ impl Expr for Super {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes {
         visitor.visit_super_expr(self)
     }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct This {
@@ -189,6 +228,10 @@ impl This {
 impl Expr for This {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes {
         visitor.visit_this_expr(self)
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -205,6 +248,10 @@ impl Expr for Unary {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes {
         visitor.visit_unary_expr(self)
     }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct Variable {
@@ -218,6 +265,10 @@ impl Variable {
 impl Expr for Variable {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes {
         visitor.visit_variable_expr(self)
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 

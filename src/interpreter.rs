@@ -103,7 +103,20 @@ impl Interpreter {
 
 impl ExprVisitor for Interpreter {
     fn visit_assign_expr(&mut self, expr: &Assign) -> VisitorTypes {
-        todo!()
+        let value = expr.value.accept(self);
+        match value {
+            VisitorTypes::DataType(d) => {
+                let data_type_value = match d {
+                    Some(d) => d,
+                    None => panic!("Interpreter entered an impossible state."),
+                };
+                self.environment.assign(expr.name.dup(), data_type_value)
+            }
+            _ => VisitorTypes::RunTimeError {
+                token: Some(expr.name.dup()),
+                msg: "Invalid assignment target.".to_string(),
+            },
+        }
     }
 
     fn visit_binary_expr(&mut self, expr: &Binary) -> VisitorTypes {
@@ -156,12 +169,8 @@ impl ExprVisitor for Interpreter {
                     self.concatinate(l.to_string().as_str(), r.to_string().as_str())
                 }
                 // Concatinating Nil with a string
-                (None, Some(DataType::String(r))) => {
-                    self.concatinate("nil", r.as_str())
-                }
-                (Some(DataType::String(l)), None) => {
-                    self.concatinate(l.as_str(), "nil")
-                }
+                (None, Some(DataType::String(r))) => self.concatinate("nil", r.as_str()),
+                (Some(DataType::String(l)), None) => self.concatinate(l.as_str(), "nil"),
                 // Concatinating Nil with a number
                 (None, Some(DataType::Number(r))) => {
                     self.concatinate("nil", r.to_string().as_str())
@@ -170,12 +179,8 @@ impl ExprVisitor for Interpreter {
                     self.concatinate(l.to_string().as_str(), "nil")
                 }
                 // Concatinating Nil with a bool
-                (None, Some(DataType::Bool(r))) => {
-                    self.concatinate("nil", r.to_string().as_str())
-                }
-                (Some(DataType::Bool(l)), None) => {
-                    self.concatinate(l.to_string().as_str(), "nil")
-                }
+                (None, Some(DataType::Bool(r))) => self.concatinate("nil", r.to_string().as_str()),
+                (Some(DataType::Bool(l)), None) => self.concatinate(l.to_string().as_str(), "nil"),
                 _ => {
                     return self.visitor_runtime_error(
                         Some(&expr.operator),
@@ -314,7 +319,10 @@ impl ExprVisitor for Interpreter {
     fn visit_variable_expr(&mut self, expr: &Variable) -> VisitorTypes {
         match self.environment.get(&expr.name.lexeme) {
             Some(v) => VisitorTypes::DataType(Some(v.clone())),
-            None => self.visitor_runtime_error(Some(&expr.name), "Variable is not defined."),
+            None => self.visitor_runtime_error(
+                Some(&expr.name),
+                format!("Variable '{}' is not defined.", expr.name.lexeme).as_str(),
+            ),
         }
     }
 }
