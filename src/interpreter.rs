@@ -13,11 +13,13 @@ use crate::{
 };
 pub struct Interpreter {
     environment: Environment,
+    is_repl: bool,
 }
 impl Interpreter {
-    pub fn new() -> Interpreter {
+    pub fn new(is_repl: bool) -> Interpreter {
         Interpreter {
             environment: Environment::new(),
+            is_repl,
         }
     }
 
@@ -28,7 +30,7 @@ impl Interpreter {
     }
 
     fn execute(&mut self, stmt: &Box<dyn Stmt>) {
-        stmt.accept(self);
+        let executor = stmt.accept(self);
     }
 
     fn execute_block(&mut self, statements: &Box<Vec<Box<dyn Stmt>>>, environment: Environment) {
@@ -84,6 +86,16 @@ impl Interpreter {
             (DataType::Bool(a), DataType::Bool(b)) => a == b,
             (DataType::Nil, DataType::Nil) => true,
             _ => false,
+        }
+    }
+
+    fn repl_printer(&self, expr: &VisitorTypes) {
+        match expr {
+            VisitorTypes::DataType(d) => {
+                let value = self.stringify_helper(d.clone());
+                println!("{value}");
+            }
+            _ => {}
         }
     }
 
@@ -305,7 +317,10 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_expression_stmt(&mut self, stmt: &Expression) -> VisitorTypes {
-        stmt.expression.accept(self);
+        let expr = stmt.expression.accept(self);
+        if self.is_repl {
+            self.repl_printer(&expr);
+        }
         VisitorTypes::Void(())
     }
 

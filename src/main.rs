@@ -8,14 +8,14 @@ use ast::{Binary, Grouping, Literal, Unary};
 use token::{DataType, Token, TokenType};
 
 use crate::interpreter::Interpreter;
-mod ast_printer;
-mod error;
 mod ast;
+mod ast_printer;
+mod environment;
+mod error;
 mod interpreter;
 mod parser;
 mod scanner;
 mod token;
-mod environment;
 #[macro_use]
 extern crate lazy_static;
 
@@ -34,7 +34,7 @@ fn main() {
 
 fn run_file(path: &str) -> io::Result<()> {
     let src = std::fs::read_to_string(path)?;
-    run(&src).unwrap();
+    run(&src, false).unwrap();
     if error::get_error() {
         process::exit(65);
     }
@@ -56,13 +56,13 @@ fn run_prompt() -> io::Result<()> {
         if line.is_empty() {
             break;
         }
-        run(&line).unwrap();
+        run(&line, true).unwrap();
         error::set_error(false);
     }
     Ok(())
 }
 
-fn run(source: &str) -> io::Result<()> {
+fn run(source: &str, is_repl: bool) -> io::Result<()> {
     let mut token_scanner = scanner::Scanner::new(source.to_string());
     let tokens = token_scanner.scan_tokens();
     let mut parser = parser::Parser::new(&tokens);
@@ -73,9 +73,8 @@ fn run(source: &str) -> io::Result<()> {
             return Ok(());
         }
     };
-    let mut interpreter = Interpreter::new();
+    let mut interpreter = Interpreter::new(is_repl);
     interpreter.interpret(statements);
-
 
     Ok(())
 }
