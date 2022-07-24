@@ -259,7 +259,33 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_logical_expr(&mut self, expr: &Logical) -> VisitorTypes {
-        todo!()
+        let left = match expr.left.accept(self) {
+            VisitorTypes::DataType(d) => match d {
+                Some(d) => d,
+                None => {
+                    return self.visitor_runtime_error(
+                        Some(&expr.operator),
+                        "Expected a binary operation with proper data types.",
+                    );
+                }
+            },
+            _ => {
+                return self.visitor_runtime_error(
+                    Some(&expr.operator),
+                    "Expected a binary operation with proper data types.",
+                );
+            }
+        };
+        if expr.operator.token_type == TokenType::Or {
+            if self.is_truthy(&left) {
+                return VisitorTypes::DataType(Some(left));
+            }
+        } else {
+            if !self.is_truthy(&left) {
+                return VisitorTypes::DataType(Some(left));
+            }
+        }
+        expr.right.accept(self)
     }
 
     fn visit_set_expr(&mut self, expr: &Set) -> VisitorTypes {

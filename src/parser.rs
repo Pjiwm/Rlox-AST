@@ -2,8 +2,8 @@ use std::io::{self, Error, ErrorKind};
 
 use crate::{
     ast::{
-        Assign, Binary, Block, Expr, Expression, Grouping, If, Literal, Print, Stmt, Unary, Var,
-        Variable,
+        Assign, Binary, Block, Expr, Expression, Grouping, If, Literal, Logical, Print, Stmt,
+        Unary, Var, Variable,
     },
     error::parse_error,
     token::{DataType, Token, TokenType},
@@ -62,7 +62,7 @@ impl<'a> Parser<'a> {
 
     fn if_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
         self.consume(TokenType::LeftParen, "Expect '(' after 'if'.")?;
-        let mut expr = self.expression()?;
+        let expr = self.expression()?;
         self.consume(TokenType::RightParen, "Expect ')' after if condition.")?;
 
         let then_branch = self.statement()?;
@@ -80,7 +80,7 @@ impl<'a> Parser<'a> {
                 }
             });
         }
-        Ok(Box::new( If::new(expr, then_branch, else_branch)))
+        Ok(Box::new(If::new(expr, then_branch, else_branch)))
     }
 
     fn print_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
@@ -121,7 +121,8 @@ impl<'a> Parser<'a> {
     }
 
     fn assignment(&mut self) -> Result<Box<dyn Expr>, Error> {
-        let expr = self.equality()?;
+        // let expr = self.equality()?;
+        let expr = self.or()?;
         let equal_vec = vec![TokenType::Equal];
         if self.matches(&equal_vec) {
             let equals = self.previous().dup();
@@ -130,6 +131,30 @@ impl<'a> Parser<'a> {
                 Some(v) => return Ok(Box::new(Assign::new(v.name.dup(), value))),
                 None => return Err(self.parse_error(&equals, "Invalid assignment target.")),
             }
+        }
+        Ok(expr)
+    }
+
+    fn or(&mut self) -> Result<Box<dyn Expr>, Error> {
+        let mut expr = self.and()?;
+
+        let or_vec = vec![TokenType::Or];
+        while self.matches(&or_vec) {
+            let operator = self.previous().dup();
+            let right = self.and()?;
+            expr = Box::new(Logical::new(expr, operator, right))
+        }
+        Ok(expr)
+    }
+
+    fn and(&mut self) -> Result<Box<dyn Expr>, Error> {
+        let mut expr = self.equality()?;
+
+        let and_vec = vec![TokenType::And];
+        while self.matches(&and_vec) {
+            let operator = self.previous().dup();
+            let right = self.equality()?;
+            expr = Box::new(Logical::new(expr, operator, right))
         }
         Ok(expr)
     }
