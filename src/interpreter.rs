@@ -1,5 +1,6 @@
 use std::{
-    borrow::Borrow,
+    borrow::BorrowMut,
+    cell::RefCell,
     io::{self, Error, ErrorKind},
 };
 
@@ -12,13 +13,13 @@ use crate::{
     token::{DataType, Token, TokenType},
 };
 pub struct Interpreter {
-    environment: Environment,
+    environment: RefCell<Environment>,
     is_repl: bool,
 }
 impl Interpreter {
     pub fn new(is_repl: bool) -> Interpreter {
         Interpreter {
-            environment: Environment::new(),
+            environment: RefCell::new(Environment::new()),
             is_repl,
         }
     }
@@ -34,11 +35,11 @@ impl Interpreter {
     }
 
     fn execute_block(&mut self, statements: &Box<Vec<Box<dyn Stmt>>>, environment: Environment) {
-        let previous = environment;
+        let previous = self.environment.replace(environment);
         for stmt in statements.iter() {
             self.execute(stmt.clone());
         }
-        self.environment = previous;
+        self.environment.replace(previous);
     }
 
     fn stringify(&self, visitor_type: VisitorTypes) -> Result<String, Error> {
@@ -133,7 +134,9 @@ impl ExprVisitor for Interpreter {
                     Some(d) => d,
                     None => panic!("Interpreter entered an impossible state."),
                 };
-                self.environment.assign(expr.name.dup(), data_type_value)
+                self.environment
+                    .borrow_mut()
+                    .assign(expr.name.dup(), data_type_value)
             }
             _ => VisitorTypes::RunTimeError {
                 token: Some(expr.name.dup()),
@@ -198,7 +201,7 @@ impl ExprVisitor for Interpreter {
                 (None, Some(_)) => DataType::Bool(false),
             },
             TokenType::Greater => match (left, right) {
-                (Some(DataType::Bool(l)), Some(DataType::Bool(r))) => DataType::Bool(l > r),
+                (Some(DataType::Number(l)), Some(DataType::Number(r))) => DataType::Bool(l > r),
                 _ => {
                     return self.visitor_runtime_error(
                         Some(&expr.operator),
@@ -207,7 +210,7 @@ impl ExprVisitor for Interpreter {
                 }
             },
             TokenType::Greaterequal => match (left, right) {
-                (Some(DataType::Bool(l)), Some(DataType::Bool(r))) => DataType::Bool(l >= r),
+                (Some(DataType::Number(l)), Some(DataType::Number(r))) => DataType::Bool(l >= r),
                 _ => {
                     return self.visitor_runtime_error(
                         Some(&expr.operator),
@@ -216,7 +219,7 @@ impl ExprVisitor for Interpreter {
                 }
             },
             TokenType::Less => match (left, right) {
-                (Some(DataType::Bool(l)), Some(DataType::Bool(r))) => DataType::Bool(l < r),
+                (Some(DataType::Number(l)), Some(DataType::Number(r))) => DataType::Bool(l < r),
                 _ => {
                     return self.visitor_runtime_error(
                         Some(&expr.operator),
@@ -225,7 +228,7 @@ impl ExprVisitor for Interpreter {
                 }
             },
             TokenType::Lessequal => match (left, right) {
-                (Some(DataType::Bool(l)), Some(DataType::Bool(r))) => DataType::Bool(l <= r),
+                (Some(DataType::Number(l)), Some(DataType::Number(r))) => DataType::Bool(l <= r),
                 _ => {
                     return self.visitor_runtime_error(
                         Some(&expr.operator),
@@ -328,16 +331,14 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_variable_expr(&mut self, expr: &Variable) -> VisitorTypes {
-        self.environment.get(expr.name.dup())
+        self.environment.borrow().get(expr.name.dup())
     }
 }
 
 impl StmtVisitor for Interpreter {
     fn visit_block_stmt(&mut self, stmt: &Block) -> VisitorTypes {
-        self.execute_block(
-            &stmt.statements,
-            Environment::new_enclosing(Box::new(self.environment.borrow().clone())),
-        );
+        let env = Environment::new_enclosing(Box::new(self.environment.borrow().clone()));
+        self.execute_block(&stmt.statements, env);
         VisitorTypes::Void(())
     }
 
@@ -401,7 +402,9 @@ impl StmtVisitor for Interpreter {
             Some(v) => v,
             None => DataType::Nil,
         };
-        self.environment.define(stmt.name.lexeme.clone(), value);
+        self.environment
+            .borrow_mut()
+            .define(stmt.name.lexeme.clone(), value);
         VisitorTypes::Void(())
     }
 
