@@ -1,12 +1,11 @@
 use crate::run;
-use dialoguer::{theme::Theme, History, Input};
+use dialoguer::{console::style, theme::Theme, History, Input};
 use std::{collections::VecDeque, process};
 
 pub fn prompt() {
     let mut history = MyHistory::default();
     loop {
-        if let Ok(cmd) = Input::<String>::with_theme(&MyTheme)
-            .with_prompt(">>")
+        if let Ok(cmd) = Input::<String>::with_theme(&MyTheme::new())
             .history_with(&mut history)
             .interact_text()
         {
@@ -45,10 +44,23 @@ impl<T: ToString> History<T> for MyHistory {
     }
 }
 
-struct MyTheme;
+struct MyTheme {
+    prefix: String,
+    after_exec_prefix: String,
+}
+
+impl MyTheme {
+    fn new() -> Self {
+        MyTheme {
+            prefix: style(">>> ").for_stderr().cyan().to_string(),
+            after_exec_prefix: style(">>> ").for_stderr().green().to_string(),
+
+        }
+    }
+}
 impl Theme for MyTheme {
     fn format_prompt(&self, f: &mut dyn std::fmt::Write, prompt: &str) -> std::fmt::Result {
-        write!(f, "{}>", prompt)
+        write!(f, "{}{}", prompt, self.after_exec_prefix)
     }
 
     fn format_error(&self, f: &mut dyn std::fmt::Write, err: &str) -> std::fmt::Result {
@@ -103,7 +115,7 @@ impl Theme for MyTheme {
         match default {
             Some(default) if prompt.is_empty() => write!(f, "[{}]: ", default),
             Some(default) => write!(f, "{} [{}]: ", prompt, default),
-            None => write!(f, "{}> ", prompt),
+            None => write!(f, "{}{} ", prompt, self.prefix),
         }
     }
 
@@ -113,7 +125,7 @@ impl Theme for MyTheme {
         prompt: &str,
         sel: &str,
     ) -> std::fmt::Result {
-        write!(f, "{}> {}", prompt, sel)
+        write!(f, "{}{} {}", prompt, self.after_exec_prefix, sel)
     }
 
     fn format_password_prompt(
