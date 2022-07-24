@@ -332,7 +332,19 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_if_stmt(&mut self, stmt: &If) -> VisitorTypes {
-        todo!()
+        let condition = match stmt.condition.accept(self) {
+            VisitorTypes::DataType(d) => match d {
+                Some(s) => s,
+                None => return self.visitor_runtime_error(None, "Expected a condition."),
+            },
+            _ => return self.visitor_runtime_error(None, "Expected a condition."),
+        };
+        if self.is_truthy(&condition) {
+            self.execute(&stmt.then_branch);
+        } else if stmt.else_branch.is_some() {
+            self.execute(&stmt.else_branch.as_ref().unwrap());
+        }
+        VisitorTypes::Void(())
     }
 
     fn visit_print_stmt(&mut self, stmt: &Print) -> VisitorTypes {

@@ -2,7 +2,7 @@ use std::io::{self, Error, ErrorKind};
 
 use crate::{
     ast::{
-        Assign, Binary, Block, Expr, Expression, Grouping, Literal, Print, Stmt, Unary, Var,
+        Assign, Binary, Block, Expr, Expression, Grouping, If, Literal, Print, Stmt, Unary, Var,
         Variable,
     },
     error::parse_error,
@@ -48,13 +48,39 @@ impl<'a> Parser<'a> {
     fn statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
         let print_vec = vec![TokenType::Print];
         let block_vec = vec![TokenType::LeftBrace];
-        if self.matches(&print_vec) {
+        let if_vec = vec![TokenType::If];
+        if self.matches(&if_vec) {
+            self.if_statement()
+        } else if self.matches(&print_vec) {
             self.print_statement()
         } else if self.matches(&block_vec) {
             Ok(Box::new(Block::new(self.block()?)))
         } else {
             self.expression_statement()
         }
+    }
+
+    fn if_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
+        self.consume(TokenType::LeftParen, "Expect '(' after 'if'.")?;
+        let mut expr = self.expression()?;
+        self.consume(TokenType::RightParen, "Expect ')' after if condition.")?;
+
+        let then_branch = self.statement()?;
+        let mut else_branch: Option<Box<dyn Stmt>> = None;
+        let else_vec = vec![TokenType::Else];
+        if self.matches(&else_vec) {
+            // TODO this might become a bug.
+            else_branch = Some(match self.statement() {
+                Ok(e) => e,
+                Err(_) => {
+                    return Err(Error::new(
+                        ErrorKind::InvalidData,
+                        "Expect statement after 'else'.",
+                    ));
+                }
+            });
+        }
+        Ok(Box::new( If::new(expr, then_branch, else_branch)))
     }
 
     fn print_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
