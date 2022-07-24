@@ -165,6 +165,9 @@ impl ExprVisitor for Interpreter {
         let calculation = match expr.operator.token_type {
             // There's extra logic for strings, this is so strings can be concatinated with the + operator.
             TokenType::Plus => match (left, right) {
+                (Some(DataType::Number(l)), Some(DataType::Number(r))) => {
+                    return VisitorTypes::DataType(Some(DataType::Number(l + r)));
+                }
                 (None, None) => self.concatinate("nil", "nil"),
                 (None, Some(r)) => self.concatinate("nil", &r.to_string()),
                 (Some(l), None) => self.concatinate(&l.to_string(), "nil"),
