@@ -4,6 +4,7 @@ use std::{collections::VecDeque, process};
 
 pub fn prompt() {
     let mut history = MyHistory::default();
+    clear();
     loop {
         if let Ok(cmd) = Input::<String>::with_theme(&MyTheme::new())
             .history_with(&mut history)
@@ -11,9 +12,22 @@ pub fn prompt() {
         {
             if cmd == "exit" {
                 process::exit(0);
+            } else if cmd == "clear" {
+                clear();
+            } else {
+                run(&cmd, true).unwrap();
             }
-            run(&cmd, true).unwrap();
         }
+    }
+}
+
+fn clear() {
+    match std::process::Command::new("cls").status() {
+        Ok(_) => (),
+        Err(_) => match std::process::Command::new("clear").status() {
+            Ok(_) => (),
+            Err(_) => print!("{esc}[2J{esc}[1;1H", esc = 27 as char),
+        },
     }
 }
 
@@ -54,7 +68,6 @@ impl MyTheme {
         MyTheme {
             prefix: style(">>> ").for_stderr().cyan().to_string(),
             after_exec_prefix: style(">>> ").for_stderr().green().to_string(),
-
         }
     }
 }
