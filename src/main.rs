@@ -5,6 +5,7 @@ use std::{
 };
 
 use ast::{Binary, Grouping, Literal, Unary};
+
 use token::{DataType, Token, TokenType};
 
 use crate::interpreter::Interpreter;
@@ -14,6 +15,7 @@ mod environment;
 mod error;
 mod interpreter;
 mod parser;
+mod repl;
 mod scanner;
 mod token;
 #[macro_use]
@@ -45,24 +47,11 @@ fn run_file(path: &str) -> io::Result<()> {
 }
 
 fn run_prompt() -> io::Result<()> {
-    let stdin = io::stdin();
-    let mut stdout = io::stdout();
-    let mut line = String::new();
-    loop {
-        print!("> ");
-        stdout.flush()?;
-        line.clear();
-        stdin.read_line(&mut line)?;
-        if line.is_empty() {
-            break;
-        }
-        run(&line, true).unwrap();
-        error::set_error(false);
-    }
+    repl::prompt();
     Ok(())
 }
 
-fn run(source: &str, is_repl: bool) -> io::Result<()> {
+pub fn run(source: &str, is_repl: bool) -> io::Result<()> {
     let mut token_scanner = scanner::Scanner::new(source.to_string());
     let tokens = token_scanner.scan_tokens();
     let mut parser = parser::Parser::new(&tokens);

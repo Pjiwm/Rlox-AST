@@ -7,7 +7,7 @@ use substring::Substring;
 
 use crate::{
     ast::*,
-    environment::{self, Environment},
+    environment::Environment,
     error,
     token::{DataType, Token, TokenType},
 };
@@ -30,7 +30,7 @@ impl Interpreter {
     }
 
     fn execute(&mut self, stmt: &Box<dyn Stmt>) {
-        let executor = stmt.accept(self);
+        stmt.accept(self);
     }
 
     fn execute_block(&mut self, statements: &Box<Vec<Box<dyn Stmt>>>, environment: Environment) {
