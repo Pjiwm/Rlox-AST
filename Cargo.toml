@@ -10,4 +10,5 @@ strum = "0.24"
 strum_macros = "0.24"
 substring = "1.4.5"
 lazy_static = "1.4.0"
+colored = "2.0.0"
 dialoguer = {version = "0.10.1", features = ["history"]}

@@ -1,4 +1,5 @@
 use crate::token::{Token, TokenType};
+use colored::*;
 
 static mut HAD_ERROR: bool = false;
 static mut HAD_RUNTIME_ERROR: bool = false;
@@ -32,7 +33,7 @@ pub fn parse_error(token: &Token, message: &str) {
 }
 
 fn report(line: u32, message: &str) {
-    println!("Error at line {}: {}", line, message);
+    println!("{}", format!("Error at line {line}: {message}").red());
     set_error(true);
 }
 
