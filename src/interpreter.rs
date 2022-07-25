@@ -134,10 +134,6 @@ impl ExprVisitor for Interpreter {
                     Some(d) => d,
                     None => panic!("Interpreter entered an impossible state."),
                 };
-                println!(
-                    "The datatype before we put it in: {:?}",
-                    data_type_value.clone()
-                );
                 self.environment
                     .borrow()
                     .borrow_mut()
@@ -415,15 +411,20 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_while_stmt(&mut self, stmt: &While) -> VisitorTypes {
-        let condition = match stmt.condition.accept(self) {
-            VisitorTypes::DataType(d) => match d {
-                Some(s) => s,
-                None => return self.visitor_runtime_error(None, "Expected a condition."),
-            },
-            _ => return self.visitor_runtime_error(None, "Expected a condition."),
-        };
-        while self.is_truthy(&condition) {
-            self.execute(&stmt.body);
+        let mut condition_valid = true;
+        while condition_valid {
+            let condition = match stmt.condition.accept(self) {
+                VisitorTypes::DataType(d) => match d {
+                    Some(s) => s,
+                    None => return self.visitor_runtime_error(None, "Expected a condition."),
+                },
+                _ => return self.visitor_runtime_error(None, "Expected a condition."),
+            };
+            if self.is_truthy(&condition) {
+                self.execute(&stmt.body);
+            } else {
+                condition_valid = false;
+            }
         }
         VisitorTypes::Void(())
     }
