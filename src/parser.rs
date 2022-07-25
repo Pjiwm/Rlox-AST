@@ -3,7 +3,7 @@ use std::io::{self, Error, ErrorKind};
 use crate::{
     ast::{
         Assign, Binary, Block, Expr, Expression, Grouping, If, Literal, Logical, Print, Stmt,
-        Unary, Var, Variable,
+        Unary, Var, Variable, While,
     },
     error::parse_error,
     token::{DataType, Token, TokenType},
@@ -49,10 +49,13 @@ impl<'a> Parser<'a> {
         let print_vec = vec![TokenType::Print];
         let block_vec = vec![TokenType::LeftBrace];
         let if_vec = vec![TokenType::If];
+        let while_vec = vec![TokenType::While];
         if self.matches(&if_vec) {
             self.if_statement()
         } else if self.matches(&print_vec) {
             self.print_statement()
+        } else if self.matches(&while_vec) {
+            self.while_statement()
         } else if self.matches(&block_vec) {
             Ok(Box::new(Block::new(self.block()?)))
         } else {
@@ -102,6 +105,14 @@ impl<'a> Parser<'a> {
             "Expect ';' after variable declaration.",
         )?;
         Ok(Box::new(Var::new(name.dup(), initializer)))
+    }
+
+    fn while_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
+        self.consume(TokenType::LeftParen, "Expect '(' after 'while'.")?;
+        let condition = self.expression()?;
+        self.consume(TokenType::RightParen, "Expect ')' after condition.")?;
+        let body = self.statement()?;
+        Ok(Box::new(While::new(condition, body)))
     }
 
     fn expression_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {

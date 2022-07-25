@@ -1,7 +1,7 @@
 use std::{
-    borrow::BorrowMut,
     cell::RefCell,
     io::{self, Error, ErrorKind},
+    rc::Rc,
 };
 
 use substring::Substring;
@@ -13,13 +13,13 @@ use crate::{
     token::{DataType, Token, TokenType},
 };
 pub struct Interpreter {
-    environment: RefCell<Environment>,
+    environment: RefCell<Rc<RefCell<Environment>>>,
     is_repl: bool,
 }
 impl Interpreter {
     pub fn new(is_repl: bool) -> Interpreter {
         Interpreter {
-            environment: RefCell::new(Environment::new()),
+            environment: RefCell::new(Rc::new(RefCell::new(Environment::new()))),
             is_repl,
         }
     }
@@ -35,7 +35,7 @@ impl Interpreter {
     }
 
     fn execute_block(&mut self, statements: &Box<Vec<Box<dyn Stmt>>>, environment: Environment) {
-        let previous = self.environment.replace(environment);
+        let previous = self.environment.replace(Rc::new(RefCell::new(environment)));
         for stmt in statements.iter() {
             self.execute(stmt.clone());
         }
@@ -134,9 +134,14 @@ impl ExprVisitor for Interpreter {
                     Some(d) => d,
                     None => panic!("Interpreter entered an impossible state."),
                 };
+                println!(
+                    "The datatype before we put it in: {:?}",
+                    data_type_value.clone()
+                );
                 self.environment
+                    .borrow()
                     .borrow_mut()
-                    .assign(expr.name.dup(), data_type_value)
+                    .assign(&expr.name, data_type_value.clone())
             }
             _ => VisitorTypes::RunTimeError {
                 token: Some(expr.name.dup()),
@@ -331,13 +336,13 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_variable_expr(&mut self, expr: &Variable) -> VisitorTypes {
-        self.environment.borrow().get(expr.name.dup())
+        self.environment.borrow().borrow_mut().get(&expr.name)
     }
 }
 
 impl StmtVisitor for Interpreter {
     fn visit_block_stmt(&mut self, stmt: &Block) -> VisitorTypes {
-        let env = Environment::new_enclosing(Box::new(self.environment.borrow().clone()));
+        let env = Environment::new_enclosing(self.environment.borrow().clone());
         self.execute_block(&stmt.statements, env);
         VisitorTypes::Void(())
     }
@@ -403,12 +408,23 @@ impl StmtVisitor for Interpreter {
             None => DataType::Nil,
         };
         self.environment
+            .borrow()
             .borrow_mut()
-            .define(stmt.name.lexeme.clone(), value);
+            .define(stmt.name.dup().lexeme, value);
         VisitorTypes::Void(())
     }
 
     fn visit_while_stmt(&mut self, stmt: &While) -> VisitorTypes {
-        todo!()
+        let condition = match stmt.condition.accept(self) {
+            VisitorTypes::DataType(d) => match d {
+                Some(s) => s,
+                None => return self.visitor_runtime_error(None, "Expected a condition."),
+            },
+            _ => return self.visitor_runtime_error(None, "Expected a condition."),
+        };
+        while self.is_truthy(&condition) {
+            self.execute(&stmt.body);
+        }
+        VisitorTypes::Void(())
     }
 }

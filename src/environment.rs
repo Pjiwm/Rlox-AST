@@ -1,4 +1,9 @@
-use std::{collections::HashMap};
+use std::{
+    borrow::Borrow,
+    cell::RefCell,
+    collections::{hash_map::Entry, HashMap},
+    rc::Rc,
+};
 
 use crate::{
     ast::VisitorTypes,
@@ -7,7 +12,7 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Environment {
-    pub enclosing: Option<Box<Environment>>,
+    pub enclosing: Option<Rc<RefCell<Environment>>>,
     pub values: HashMap<String, DataType>,
 }
 
@@ -19,7 +24,7 @@ impl Environment {
         }
     }
 
-    pub fn new_enclosing(enclosing: Box<Environment>) -> Self {
+    pub fn new_enclosing(enclosing: Rc<RefCell<Environment>>) -> Environment {
         Self {
             enclosing: Some(enclosing),
             values: HashMap::new(),
@@ -30,29 +35,29 @@ impl Environment {
         self.values.insert(name, value);
     }
 
-    pub fn get(&self, name: Token) -> VisitorTypes {
-        if self.values.contains_key(&name.lexeme) {
-            let value = Some(self.values[&name.lexeme].dup());
-            return VisitorTypes::DataType(value);
+    pub fn get(&self, name: &Token) -> VisitorTypes {
+        if let Some(object) = self.values.get(&name.dup().lexeme) {
+            return VisitorTypes::DataType(Some(object.clone()));
+        } else if let Some(enclosing) = &self.enclosing {
+            enclosing.borrow_mut().get(name)
+        } else {
+            VisitorTypes::RunTimeError {
+                token: Some(name.dup()),
+                msg: format!("Variable {} is not defined.", name.lexeme),
+            }
         }
-        if let Some(ref env) = self.enclosing {
-            return env.get(name);
+    }
+
+    pub fn assign(&mut self, name: &Token, value: DataType) -> VisitorTypes {
+        if let Entry::Occupied(mut object) = self.values.entry(name.dup().lexeme) {
+            object.insert(value);
+            return VisitorTypes::Void(());
+        } else if let Some(ref mut enclosing) = self.enclosing {
+            return enclosing.borrow_mut().assign(name, value);
         }
         VisitorTypes::RunTimeError {
             token: Some(name.dup()),
             msg: format!("Variable {} is not defined.", name.lexeme),
-        }
-    }
-
-    pub fn assign(&mut self, name: Token, value: DataType) -> VisitorTypes {
-        if self.values.contains_key(name.lexeme.as_str()) {
-            let v = self.values.insert(name.lexeme.clone(), value.clone());
-            VisitorTypes::DataType(v)
-        } else {
-            VisitorTypes::RunTimeError {
-                msg: "Undefined variable".to_string(),
-                token: Some(name.dup()),
-            }
         }
     }
 }
