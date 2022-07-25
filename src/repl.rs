@@ -1,10 +1,12 @@
 use crate::run;
+use colored::Colorize;
 use dialoguer::{console::style, theme::Theme, History, Input};
 use std::{collections::VecDeque, process};
 
 pub fn prompt() {
     let mut history = MyHistory::default();
     clear();
+    welcome();
     let mut input = String::new();
     loop {
         if let Ok(cmd) = Input::<String>::with_theme(&MyTheme::new())
@@ -15,6 +17,8 @@ pub fn prompt() {
                 process::exit(0);
             } else if cmd == "clear" {
                 clear();
+            } else if cmd == "reset" {
+                input.clear();
             } else {
                 input.push_str(&cmd);
                 run(&input, true).unwrap();
@@ -31,6 +35,23 @@ fn clear() {
             Err(_) => print!("{esc}[2J{esc}[1;1H", esc = 27 as char),
         },
     }
+}
+
+fn welcome() {
+    let version = env!("CARGO_PKG_VERSION").to_string().green();
+    let author = env!("CARGO_PKG_AUTHORS").to_string().green();
+    let green_arrow = ">>>".to_string().green();
+    println!("{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}",
+    format!("================================================================================================").yellow(),
+    format!("Lox Version: {version}").yellow(),
+    format!("Author: {author}").yellow(),
+    format!("A Rust implementation of the Lox language from the book Crafting Interpreters by Robert Nystorm.\n").yellow(),
+    format!("Running in REPL mode. Type 'exit' to exit.").yellow(),
+    format!("Other available commands:").yellow(),
+    format!("{green_arrow} clear {}", "- Clears the terminal screen.".to_string().yellow() ),
+    format!("{green_arrow} reset {}", "- Resets the input buffer.".to_string().yellow() ),
+    format!("{green_arrow} exit {}", "- Exits the REPL.".to_string().yellow() ),
+    format!("================================================================================================").yellow(),);
 }
 
 struct MyHistory {
