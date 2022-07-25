@@ -5,6 +5,7 @@ use std::{collections::VecDeque, process};
 pub fn prompt() {
     let mut history = MyHistory::default();
     clear();
+    let mut input = String::new();
     loop {
         if let Ok(cmd) = Input::<String>::with_theme(&MyTheme::new())
             .history_with(&mut history)
@@ -15,7 +16,8 @@ pub fn prompt() {
             } else if cmd == "clear" {
                 clear();
             } else {
-                run(&cmd, true).unwrap();
+                input.push_str(&cmd);
+                run(&input, true).unwrap();
             }
         }
     }

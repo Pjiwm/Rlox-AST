@@ -15,17 +15,20 @@ use crate::{
 pub struct Interpreter {
     environment: RefCell<Rc<RefCell<Environment>>>,
     is_repl: bool,
+    is_last_statement: bool,
 }
 impl Interpreter {
     pub fn new(is_repl: bool) -> Interpreter {
         Interpreter {
             environment: RefCell::new(Rc::new(RefCell::new(Environment::new()))),
             is_repl,
+            is_last_statement: false,
         }
     }
 
     pub fn interpret(&mut self, statements: Vec<Box<dyn Stmt>>) {
-        for stmt in statements {
+        for (i, stmt) in statements.iter().enumerate() {
+            self.is_last_statement = i == statements.len() - 1;
             self.execute(&stmt);
         }
     }
@@ -349,7 +352,7 @@ impl StmtVisitor for Interpreter {
 
     fn visit_expression_stmt(&mut self, stmt: &Expression) -> VisitorTypes {
         let expr = stmt.expression.accept(self);
-        if self.is_repl {
+        if self.is_repl && self.is_last_statement {
             self.repl_printer(&expr);
         }
         VisitorTypes::Void(())
