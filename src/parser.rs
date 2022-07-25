@@ -1,5 +1,7 @@
 use std::io::{self, Error, ErrorKind};
 
+use lazy_static::__Deref;
+
 use crate::{
     ast::{
         Assign, Binary, Block, Expr, Expression, Grouping, If, Literal, Logical, Print, Stmt,
@@ -69,7 +71,43 @@ impl<'a> Parser<'a> {
         } else {
             Some(self.expression_statement()?)
         };
-        todo!()
+
+        let condition = if self.matches(&[TokenType::Semicolon]) {
+            None
+        } else {
+            Some(self.expression()?)
+        };
+        self.consume(TokenType::Semicolon, "Expect ';' after loop condition.")?;
+
+        let increment = if self.matches(&[TokenType::RightParen]) {
+            None
+        } else {
+            Some(self.expression()?)
+        };
+
+        self.consume(TokenType::RightParen, "Expect ')' after for clauses.")?;
+        let mut body = self.statement()?;
+
+        if let Some(inc) = increment {
+            let vec = Box::new(vec![body, Box::new(Expression::new(inc))]);
+            body = Box::new(Block::new(vec));
+        }
+
+        if let Some(c) = condition {
+            body = Box::new(While::new(c, body));
+        } else {
+            body = Box::new(While::new(
+                Box::new(Literal::new(Some(DataType::Bool(true)))),
+                body,
+            ));
+        };
+
+        if let Some(init) = initializer {
+            let vec = Box::new(vec![init, body]);
+            body = Box::new(Block::new(vec));
+        }
+
+        Ok(body)
     }
 
     fn if_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
