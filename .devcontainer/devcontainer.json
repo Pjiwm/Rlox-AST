@@ -27,7 +27,8 @@
 		"vadimcn.vscode-lldb",
 		"bungcip.better-toml",
 		"serayuzgur.crates",
-		"rust-lang.rust-analyzer"
+		"rust-lang.rust-analyzer",
+		"dberezin.lox-language"	
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
