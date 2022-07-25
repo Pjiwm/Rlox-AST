@@ -32,8 +32,7 @@ impl<'a> Parser<'a> {
     }
 
     fn decleration(&mut self) -> Result<Box<dyn Stmt>, Error> {
-        let var_vec = vec![TokenType::Var];
-        if self.matches(&var_vec) {
+        if self.matches(&[TokenType::Var]) {
             return self.var_decleration();
         }
         match self.statement() {
@@ -46,21 +45,31 @@ impl<'a> Parser<'a> {
     }
 
     fn statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
-        let print_vec = vec![TokenType::Print];
-        let block_vec = vec![TokenType::LeftBrace];
-        let if_vec = vec![TokenType::If];
-        let while_vec = vec![TokenType::While];
-        if self.matches(&if_vec) {
+        if self.matches(&[TokenType::For]) {
+            return self.for_statement();
+        } else if self.matches(&[TokenType::If]) {
             self.if_statement()
-        } else if self.matches(&print_vec) {
+        } else if self.matches(&[TokenType::Print]) {
             self.print_statement()
-        } else if self.matches(&while_vec) {
+        } else if self.matches(&[TokenType::While]) {
             self.while_statement()
-        } else if self.matches(&block_vec) {
+        } else if self.matches(&[TokenType::LeftBrace]) {
             Ok(Box::new(Block::new(self.block()?)))
         } else {
             self.expression_statement()
         }
+    }
+
+    fn for_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
+        self.consume(TokenType::LeftParen, "Expect '(' after 'for'.")?;
+        let initializer = if self.matches(&[TokenType::Semicolon]) {
+            None
+        } else if self.matches(&[TokenType::Var]) {
+            Some(self.var_decleration()?)
+        } else {
+            Some(self.expression_statement()?)
+        };
+        todo!()
     }
 
     fn if_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
@@ -70,8 +79,7 @@ impl<'a> Parser<'a> {
 
         let then_branch = self.statement()?;
         let mut else_branch: Option<Box<dyn Stmt>> = None;
-        let else_vec = vec![TokenType::Else];
-        if self.matches(&else_vec) {
+        if self.matches(&[TokenType::Else]) {
             // TODO this might become a bug.
             else_branch = Some(match self.statement() {
                 Ok(e) => e,
@@ -94,8 +102,7 @@ impl<'a> Parser<'a> {
 
     fn var_decleration(&mut self) -> Result<Box<dyn Stmt>, Error> {
         let name = self.consume(TokenType::Identifier, "Expect variable name.")?;
-        let equal_vec = vec![TokenType::Equal];
-        let initializer = if self.matches(&equal_vec) {
+        let initializer = if self.matches(&[TokenType::Equal]) {
             Some(self.expression()?)
         } else {
             None
@@ -134,8 +141,7 @@ impl<'a> Parser<'a> {
     fn assignment(&mut self) -> Result<Box<dyn Expr>, Error> {
         // let expr = self.equality()?;
         let expr = self.or()?;
-        let equal_vec = vec![TokenType::Equal];
-        if self.matches(&equal_vec) {
+        if self.matches(&[TokenType::Equal]) {
             let equals = self.previous().dup();
             let value = self.assignment()?;
             match expr.as_any().downcast_ref::<Variable>() {
@@ -149,8 +155,7 @@ impl<'a> Parser<'a> {
     fn or(&mut self) -> Result<Box<dyn Expr>, Error> {
         let mut expr = self.and()?;
 
-        let or_vec = vec![TokenType::Or];
-        while self.matches(&or_vec) {
+        while self.matches(&[TokenType::Or]) {
             let operator = self.previous().dup();
             let right = self.and()?;
             expr = Box::new(Logical::new(expr, operator, right))
@@ -161,8 +166,7 @@ impl<'a> Parser<'a> {
     fn and(&mut self) -> Result<Box<dyn Expr>, Error> {
         let mut expr = self.equality()?;
 
-        let and_vec = vec![TokenType::And];
-        while self.matches(&and_vec) {
+        while self.matches(&[TokenType::And]) {
             let operator = self.previous().dup();
             let right = self.equality()?;
             expr = Box::new(Logical::new(expr, operator, right))
@@ -172,8 +176,7 @@ impl<'a> Parser<'a> {
 
     fn equality(&mut self) -> Result<Box<dyn Expr>, Error> {
         let mut expr = self.comparison();
-        let equal_vec = vec![TokenType::Equalequal, TokenType::Bangequal];
-        while self.matches(&equal_vec) {
+        while self.matches(&[TokenType::Equalequal, TokenType::Bangequal]) {
             let operator = self.previous().dup();
             let right = self.comparison();
             expr = Ok(Box::new(Binary::new(expr?, operator.clone(), right?)));
@@ -199,8 +202,7 @@ impl<'a> Parser<'a> {
 
     fn term(&mut self) -> Result<Box<dyn Expr>, Error> {
         let mut expr = self.factor();
-        let term_vec = vec![TokenType::Minus, TokenType::Plus];
-        while self.matches(&term_vec) {
+        while self.matches(&[TokenType::Minus, TokenType::Plus]) {
             let operator = self.previous().dup();
             let right = self.factor();
             expr = Ok(Box::new(Binary::new(expr?, operator.clone(), right?)));
@@ -210,8 +212,7 @@ impl<'a> Parser<'a> {
 
     fn factor(&mut self) -> Result<Box<dyn Expr>, Error> {
         let mut expr = self.unary();
-        let factor_vec = vec![TokenType::Star, TokenType::Slash];
-        while self.matches(&factor_vec) {
+        while self.matches(&[TokenType::Star, TokenType::Slash]) {
             let operator = self.previous().dup();
             let right = self.unary();
             expr = Ok(Box::new(Binary::new(expr?, operator.clone(), right?)));
@@ -220,8 +221,7 @@ impl<'a> Parser<'a> {
     }
 
     fn unary(&mut self) -> Result<Box<dyn Expr>, Error> {
-        let unary_vec = vec![TokenType::Bang, TokenType::Minus];
-        if self.matches(&unary_vec) {
+        if self.matches(&[TokenType::Bang, TokenType::Minus]) {
             let operator = self.previous().dup();
             let right = self.unary();
             return Ok(Box::new(Unary::new(operator.clone(), right?)));
@@ -230,33 +230,27 @@ impl<'a> Parser<'a> {
     }
 
     fn primary(&mut self) -> Result<Box<dyn Expr>, Error> {
-        let false_vec = vec![TokenType::False];
-        if self.matches(&false_vec) {
+        if self.matches(&[TokenType::False]) {
             return Ok(Box::new(Literal::new(Some(DataType::Bool(false)))));
         }
-        let true_vec = vec![TokenType::True];
-        if self.matches(&true_vec) {
+        if self.matches(&[TokenType::True]) {
             return Ok(Box::new(Literal::new(Some(DataType::Bool(true)))));
         }
-        let nil_vec = vec![TokenType::Nil];
-        if self.matches(&nil_vec) {
+        if self.matches(&[TokenType::Nil]) {
             return Ok(Box::new(Literal::new(None)));
         }
 
-        let data_type_vec = vec![TokenType::Number, TokenType::String];
-        if self.matches(&data_type_vec) {
+        if self.matches(&[TokenType::Number, TokenType::String]) {
             let data_type = self.previous();
             return Ok(Box::new(Literal::new(Some(
                 data_type.clone().literal.unwrap(),
             ))));
         }
-        let identifier_vec = vec![TokenType::Identifier];
-        if self.matches(&identifier_vec) {
+        if self.matches(&[TokenType::Identifier]) {
             return Ok(Box::new(Variable::new(self.previous().dup())));
         }
 
-        let left_paren_vec = vec![TokenType::LeftParen];
-        if self.matches(&left_paren_vec) {
+        if self.matches(&[TokenType::LeftParen]) {
             let expr = self.expression();
             self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
             return Ok(Box::new(Grouping::new(expr?)));
@@ -265,7 +259,7 @@ impl<'a> Parser<'a> {
         Err(self.parse_error(self.peek(), "Expect expression."))
     }
 
-    fn matches(&mut self, types: &Vec<TokenType>) -> bool {
+    fn matches(&mut self, types: &[TokenType]) -> bool {
         for token_type in types {
             if self.check(*token_type) {
                 self.advance();
