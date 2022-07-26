@@ -86,16 +86,6 @@ pub enum DataType {
     Nil
 }
 impl DataType {
-    // TODO unused remove later
-    // pub fn dup(&self) -> DataType {
-    //     match self {
-    //         DataType::String(s) => DataType::String(s.clone()),
-    //         DataType::Number(n) => DataType::Number(*n),
-    //         DataType::Bool(b) => DataType::Bool(*b),
-    //         DataType::Nil => DataType::Nil,
-    //     }
-    // }
-
     pub fn to_string(&self) -> String {
         match self {
             DataType::String(s) => s.clone(),
