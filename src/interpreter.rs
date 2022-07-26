@@ -4,6 +4,7 @@ use std::{
     rc::Rc,
 };
 
+use colored::Colorize;
 use substring::Substring;
 
 use crate::{
@@ -96,11 +97,31 @@ impl Interpreter {
     fn repl_printer(&self, expr: &VisitorTypes) {
         match expr {
             VisitorTypes::DataType(d) => {
-                let value = self.stringify_helper(d.clone());
+                let value = self.repl_stringify(d.clone());
                 println!("{value}");
             }
             _ => {}
         }
+    }
+
+    fn repl_stringify(&self, data_type: Option<DataType>) -> String {
+        let result = match data_type {
+            Some(DataType::String(s)) => s.yellow().to_string(),
+            Some(DataType::Number(n)) => {
+                let mut number = n.to_string();
+                if number.ends_with(".0") {
+                    number = number.substring(0, number.len() - 2).to_string();
+                }
+                number.blue().to_string()
+            }
+            Some(DataType::Bool(b)) => {
+                let string = b.to_string().green();
+                string.to_string()
+            }
+            Some(DataType::Nil) => "nil".red().to_string(),
+            None => "nil".red().to_string(),
+        };
+        result
     }
 
     fn visitor_runtime_error(&self, token: Option<&Token>, msg: &str) -> VisitorTypes {
