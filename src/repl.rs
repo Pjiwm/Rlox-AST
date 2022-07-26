@@ -1,6 +1,7 @@
-use crate::run;
+use crate::{run, error};
 use colored::Colorize;
 use dialoguer::{console::style, theme::Theme, History, Input};
+use substring::Substring;
 use std::{collections::VecDeque, process};
 
 pub fn prompt() {
@@ -22,6 +23,12 @@ pub fn prompt() {
             } else {
                 input.push_str(&cmd);
                 run(&input, true).unwrap();
+                if error::get_error() {
+                    input = remove_incorrect_input(&input, &cmd);
+                }
+                if error::get_runtime_error() {
+                    input = remove_incorrect_input(&input, &cmd);
+                }
             }
         }
     }
@@ -52,6 +59,10 @@ fn welcome() {
     format!("{green_arrow} reset {}", "- Resets the input buffer.".to_string().yellow() ),
     format!("{green_arrow} exit {}", "- Exits the REPL.".to_string().yellow() ),
     format!("================================================================================================").yellow(),);
+}
+
+fn remove_incorrect_input(input: &String, cmd: &str) -> String {
+    input.substring(0, input.len() - cmd.len()).to_string()
 }
 
 struct MyHistory {
