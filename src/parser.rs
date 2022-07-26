@@ -68,7 +68,30 @@ impl<'a> Parser<'a> {
             self.expression_statement()
         }
     }
-    // TODO this one is a pain to explain.
+    /// Consumes the current Token and checks if it's an open paranthesis.
+    /// The parser advances and with the next token we grab the initializer expression.
+    /// We match the current character and if it's a semicolon we pur None in the initializer.
+    /// If this is not the case the next check is to see if it's a Var. As a for loop can initialize a variable,
+    /// within the paranthesis.
+    /// If this isn't the case either we call an expression statement.
+    /// The parser has advanced and next we check for the condition.
+    /// If the current token is a semicolon we set the condition to None.
+    /// Else we call an expression. After this the next token should be a semicolon, else we throw an error.
+    /// The parser has advanced and next we check for the increment. 
+    /// If it's a right paranthesis we set the increment to None.
+    /// Else we call an expression.
+    /// The parser has advanced again and we make sure the next token is a right paranthesis.
+    /// The body for the for loop is than grabbed by calling for a statement.
+    /// If the increment value is not None we create a block Object with e vector of statements.
+    /// In this vector is the increment value and the body. This created object will be assigned to the body.
+    /// Next if the condition is not None we create a While object which takes in the condition and the body.
+    /// This will be assigned to the body.
+    /// Else we create a While object with the body and the condition while be a datatype set to true.
+    /// Lastly if the initializer is not None we create a Block object which takes in a vector of statements,
+    /// in the vec we put the initializer and the body. Otherwise this is ignored
+    /// In the end the body is returned.
+    /// The reason why While objects are created and not a 'For' object is because they contain almost 
+    /// the same logic.
     fn for_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
         self.consume(TokenType::LeftParen, "Expect '(' after 'for'.")?;
         let initializer = if self.matches(&[TokenType::Semicolon]) {
