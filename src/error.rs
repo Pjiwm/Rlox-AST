@@ -43,6 +43,12 @@ pub fn set_error(error: bool) {
     }
 }
 
+pub fn set_runtime_error(error: bool) {
+    unsafe {
+        HAD_RUNTIME_ERROR = error;
+    }
+}
+
 pub fn get_error() -> bool {
     unsafe { HAD_ERROR }
 }

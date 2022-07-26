@@ -462,6 +462,9 @@ impl<'a> Parser<'a> {
     }
     /// Returns the previous token in the parser.
     fn previous(&self) -> &Token {
+        if self.current == 0 {
+            return &self.tokens[0];
+        }
         self.tokens.get(self.current - 1).unwrap()
     }
 }

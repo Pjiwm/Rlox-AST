@@ -25,9 +25,10 @@ pub fn prompt() {
                 run(&input, true).unwrap();
                 if error::get_error() {
                     input = remove_incorrect_input(&input, &cmd);
-                }
-                if error::get_runtime_error() {
+                    error::set_error(false);
+                } else if error::get_runtime_error() {
                     input = remove_incorrect_input(&input, &cmd);
+                    error::set_runtime_error(false);
                 }
             }
         }
