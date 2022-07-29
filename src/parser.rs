@@ -3,7 +3,7 @@ use std::io::{self, Error, ErrorKind};
 use crate::{
     ast::{
         Assign, Binary, Block, Expr, Expression, Grouping, If, Literal, Logical, Print, Stmt,
-        Unary, Var, Variable, While,
+        Unary, Var, Variable, While, Call,
     },
     error::parse_error,
     token::{DataType, Token, TokenType},
@@ -343,7 +343,7 @@ impl<'a> Parser<'a> {
         expr
     }
     /// Returns the unary operator if it exists. (!, or -)
-    /// If it doesn't exist, it'll return an epxression from the primary method.
+    /// If it doesn't exist, it'll return an epxression from the call method.
     /// If it does exist, it'll return an Unary expression with an operator and the expression after it
     /// example: !false, -a
     /// The reason the right hand side will not give back the same expression is because the parser has advanced already.
@@ -353,7 +353,56 @@ impl<'a> Parser<'a> {
             let right = self.unary();
             return Ok(Box::new(Unary::new(operator.clone(), right?)));
         }
-        self.primary()
+        self.call()
+    }
+    /// This function returns a Call object and is used to get the arguments of a function call.
+    /// The function starts by checking if the current token in the parser isn't a right paranthesis.
+    /// If this is the case a function call would look like this: doSomething(). Meaning no parameters are in the function.
+    /// If this is the case when the Call object is made an empty vec of arguments is passed.
+    /// The callee parameter which is also used for the Call object comes comes from the call method which comes from a primary function call.
+    /// A call object also stores the closing paranthesis. This is done by calling self.consume.
+    /// The parse will also advance furhter when this function is called.
+    /// If consume is called and the current Token isn't a right parenthesis an error will be given.
+    /// If the function contains arguments a loop will run. The loop is written in a do while form.
+    /// This means the code in the loop will be at least run once. An argument is added to the arguments vector each time.
+    /// This new argument is given from the expression function. Everytime this function is called the parser advances to the next token.
+    /// If the next token isn't a comma it will break the 'do while loop' as this means this was the last argument of the function.
+    /// This is because function arguments are seperated by a comma. Example: doSomething(one, two three)
+    fn finish_call(&mut self, callee: Box<dyn Expr>) -> Result<Box<dyn Expr>, Error> {
+        let mut arguments = Vec::<Box<dyn Expr>>::new();
+        if !self.check(TokenType::RightParen) {
+            // Trying a do while syntax, if bugs occur check this function.
+            loop {
+                // The limit of a function's argument count is now 254. It only reports an error, it doesn't return one.
+                if arguments.len() >= 255 {
+                    self.parse_error(self.peek(), "Can't have more than 255 arguments.");
+                }
+                arguments.push(self.expression()?);
+                if !self.matches(&[TokenType::Comma]) {
+                    break;
+                }
+            }
+        }
+        let paren = self.consume(TokenType::RightParen, "Expect ')' after arguments.")?;
+        Ok(Box::new(Call::new(callee, paren, arguments)))
+
+    }
+    /// grabs an expression containing a datatype from primary.
+    /// The parser advances and it loops unril the current token in the parser isn't a left paranthesis.
+    /// While this is true the value of expr is replaced with the returned value from the finish call method, which is used to parse
+    /// a functions argument list. That function takes in the callee as its parameter which is the old value of the expression, grabbed from
+    /// the primary function.
+    /// Whe the loop is done the new expression is returned.
+    fn call(&mut self) -> Result<Box<dyn Expr>, Error> {
+        let mut expr = self.primary();
+        loop {
+            if self.matches(&[TokenType::LeftParen]) {
+                expr = self.finish_call(expr?);
+            } else {
+                break;
+            }
+        }
+        expr
     }
     /// Primary method returns a data value wrapped in an Unary object.
     /// This is the base of the expression tree you could say.
