@@ -270,7 +270,15 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_call_expr(&mut self, expr: &Call) -> VisitorTypes {
-        todo!()
+    //     let callee = expr.callee.accept(self);
+    //     let mut arguments = Vec::<DataType>::new();
+    //     for expr in expr.arguments {
+    //         let data_type = match expr.accept(self) {
+    //             VisitorTypes::DataType(s) => s,
+    //         };
+    //         arguments.push(expr.accept(self));
+    //     }
+    todo!()
     }
 
     fn visit_get_expr(&mut self, expr: &Get) -> VisitorTypes {
