@@ -11,6 +11,7 @@ use crate::{
     ast::*,
     environment::Environment,
     error,
+    lox_callable::{LoxCallable, LoxFunction},
     token::{DataType, Token, TokenType},
 };
 pub struct Interpreter {
@@ -71,6 +72,7 @@ impl Interpreter {
                 string.to_owned()
             }
             Some(DataType::Nil) => "nil".to_string(),
+            Some(Function) => "Function".to_string(),
             None => "nil".to_string(),
         };
         result
@@ -119,6 +121,7 @@ impl Interpreter {
                 string.to_string()
             }
             Some(DataType::Nil) => "nil".red().to_string(),
+            Some(DataType::Function(_)) => "Function".purple().to_string(),
             None => "nil".red().to_string(),
         };
         result
@@ -270,15 +273,52 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_call_expr(&mut self, expr: &Call) -> VisitorTypes {
-    //     let callee = expr.callee.accept(self);
-    //     let mut arguments = Vec::<DataType>::new();
-    //     for expr in expr.arguments {
-    //         let data_type = match expr.accept(self) {
-    //             VisitorTypes::DataType(s) => s,
-    //         };
-    //         arguments.push(expr.accept(self));
-    //     }
-    todo!()
+        let mut callee = match expr.callee.accept(self) {
+            VisitorTypes::DataType(d) => d,
+            _ => panic!("Impossible state calle should always give back a datatype."),
+        };
+        let token = expr.paren.dup();
+        let mut arguments = Vec::<DataType>::new();
+        for expr in &expr.arguments {
+            let data_type = match expr.accept(self) {
+                VisitorTypes::DataType(s) => s,
+                _ => panic!("Interpreter entered impossible state."),
+            };
+            if let Some(d) = data_type {
+                arguments.push(d);
+            }
+            // LoxCallable function = (LoxCallable)callee;
+        }
+        let function: LoxFunction;
+        if let Some(c) = callee {
+            function = match c {
+                DataType::Function(f) => f,
+                _ => {
+                    return VisitorTypes::RunTimeError {
+                        token: Some(token),
+                        msg: "Can only call functions and classes.".to_string(),
+                    };
+                }
+            }
+        } else {
+            return VisitorTypes::RunTimeError {
+                token: Some(token),
+                msg: "Can only call functions and classes.".to_string(),
+            };
+        }
+
+        if arguments.len() != function.arity() {
+            return VisitorTypes::RunTimeError {
+                token: Some(token),
+                msg: format!(
+                    "Expected {} arguments but got {}.",
+                    function.arity,
+                    arguments.len()
+                ),
+            };
+        }
+
+        VisitorTypes::DataType(Some(function.call(&self, arguments)))
     }
 
     fn visit_get_expr(&mut self, expr: &Get) -> VisitorTypes {

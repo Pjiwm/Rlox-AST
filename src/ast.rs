@@ -13,6 +13,12 @@ pub enum VisitorTypes {
     Void(()),
 }
 
+impl VisitorTypes {
+    pub fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
 pub trait ExprVisitor {
     fn visit_assign_expr(&mut self, expr: &Assign) -> VisitorTypes;
     fn visit_binary_expr(&mut self, expr: &Binary) -> VisitorTypes;

@@ -1,8 +1,4 @@
-use std::{
-    env,
-    io::{self, Write},
-    process, str,
-};
+use std::{env, io, process, str};
 
 use ast::{Binary, Grouping, Literal, Unary};
 
@@ -14,6 +10,7 @@ mod ast_printer;
 mod environment;
 mod error;
 mod interpreter;
+mod lox_callable;
 mod parser;
 mod repl;
 mod scanner;
