@@ -2,11 +2,11 @@ use std::io::{self, Error, ErrorKind};
 
 use crate::{
     ast::{
-        Assign, Binary, Block, Expr, Expression, Grouping, If, Literal, Logical, Print, Stmt,
-        Unary, Var, Variable, While, Call,
+        Assign, Binary, Block, Call, Expr, Expression, Grouping, If, Literal, Logical, Print, Stmt,
+        Unary, Var, Variable, While, Function,
     },
     error::parse_error,
-    token::{DataType, Token, TokenType},
+    token::{DataType, Token, TokenType}, function,
 };
 
 pub struct Parser<'a> {
@@ -22,7 +22,7 @@ impl<'a> Parser<'a> {
     pub fn parse(&mut self) -> Result<Vec<Box<dyn Stmt>>, Error> {
         let mut statements = Vec::<Box<dyn Stmt>>::new();
         while !self.is_at_end() {
-            statements.push(self.decleration()?);
+            statements.push(self.declaration()?);
         }
         Ok(statements)
     }
@@ -30,13 +30,16 @@ impl<'a> Parser<'a> {
     fn expression(&mut self) -> Result<Box<dyn Expr>, Error> {
         self.assignment()
     }
-    /// Returns a statement that's either a var declaration or any other statements
+    /// Returns a statement that's either a function- var declaration or any other statement
     /// which the statment function can return.
-    /// It matches if the current token is a var, if it is it will return a var declaration.
+    /// It matches if the current token is a function (fun), if it is it will return a function declaration.
+    /// If not it checks if it's a var declaration.
     /// Otherwise it will return a statement by calling the statement function.
-    fn decleration(&mut self) -> Result<Box<dyn Stmt>, Error> {
-        if self.matches(&[TokenType::Var]) {
-            return self.var_decleration();
+    fn declaration(&mut self) -> Result<Box<dyn Stmt>, Error> {
+        if self.matches(&[TokenType::Fun]) {
+            return self.function("function");
+        } else if self.matches(&[TokenType::Var]) {
+            return self.var_declaration();
         }
         match self.statement() {
             Ok(stmt) => Ok(stmt),
@@ -77,7 +80,7 @@ impl<'a> Parser<'a> {
     /// The parser has advanced and next we check for the condition.
     /// If the current token is a semicolon we set the condition to None.
     /// Else we call an expression. After this the next token should be a semicolon, else we throw an error.
-    /// The parser has advanced and next we check for the increment. 
+    /// The parser has advanced and next we check for the increment.
     /// If it's a right paranthesis we set the increment to None.
     /// Else we call an expression.
     /// The parser has advanced again and we make sure the next token is a right paranthesis.
@@ -90,14 +93,14 @@ impl<'a> Parser<'a> {
     /// Lastly if the initializer is not None we create a Block object which takes in a vector of statements,
     /// in the vec we put the initializer and the body. Otherwise this is ignored
     /// In the end the body is returned.
-    /// The reason why While objects are created and not a 'For' object is because they contain almost 
+    /// The reason why While objects are created and not a 'For' object is because they contain almost
     /// the same logic.
     fn for_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
         self.consume(TokenType::LeftParen, "Expect '(' after 'for'.")?;
         let initializer = if self.matches(&[TokenType::Semicolon]) {
             None
         } else if self.matches(&[TokenType::Var]) {
-            Some(self.var_decleration()?)
+            Some(self.var_declaration()?)
         } else {
             Some(self.expression_statement()?)
         };
@@ -182,7 +185,7 @@ impl<'a> Parser<'a> {
     /// and applies it as the variables value.
     /// Before creating and returning the Var object, consume is called, this is to check if the next token is a semicolon.
     /// If it is not, it will throw an error, as all statements should end with a semicolon (;).
-    fn var_decleration(&mut self) -> Result<Box<dyn Stmt>, Error> {
+    fn var_declaration(&mut self) -> Result<Box<dyn Stmt>, Error> {
         // Variable names are lexed as Identifier tokens.
         let name = self.consume(TokenType::Identifier, "Expect variable name.")?;
         let initializer = if self.matches(&[TokenType::Equal]) {
@@ -221,11 +224,17 @@ impl<'a> Parser<'a> {
         self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
         Ok(Box::new(Expression::new(expr)))
     }
+    // TODO Describe and finish writing 'function' function.
+    fn function(&mut self, kind: &str) -> Result<Box<dyn Stmt>, Error> {
+        let err_msg = format!("Expect {} name.", kind);
+        let name = self.consume(TokenType::Identifier, err_msg.as_str());
+        todo!()
+    }
 
     fn block(&mut self) -> Result<Box<Vec<Box<dyn Stmt>>>, Error> {
         let mut statements = Vec::<Box<dyn Stmt>>::new();
         while !self.check(TokenType::RightBrace) && !self.is_at_end() {
-            statements.push(self.decleration()?);
+            statements.push(self.declaration()?);
         }
 
         self.consume(TokenType::RightBrace, "Expect '}' after block.")?;
@@ -385,7 +394,6 @@ impl<'a> Parser<'a> {
         }
         let paren = self.consume(TokenType::RightParen, "Expect ')' after arguments.")?;
         Ok(Box::new(Call::new(callee, paren, arguments)))
-
     }
     /// grabs an expression containing a datatype from primary.
     /// The parser advances and it loops unril the current token in the parser isn't a left paranthesis.
