@@ -11,18 +11,24 @@ use crate::{
     ast::*,
     environment::Environment,
     error,
-    lox_callable::{LoxCallable, LoxFunction},
-    token::{DataType, Token, TokenType},
+    lox_callable::{LoxCallable, LoxFunction, LoxNative},
+    token::{DataType, Token, TokenType}, native_functions::Clock,
 };
 pub struct Interpreter {
+    pub globals: Rc<RefCell<Environment>>,
     environment: RefCell<Rc<RefCell<Environment>>>,
     is_repl: bool,
     is_last_statement: bool,
 }
 impl Interpreter {
     pub fn new(is_repl: bool) -> Interpreter {
+        let globals = Rc::new(RefCell::new(Environment::new()));
+        let clock = DataType::Native(LoxNative { functions: Rc::new(Clock {}) });
+        globals.borrow_mut().define("clock".to_string(), clock);
+
         Interpreter {
-            environment: RefCell::new(Rc::new(RefCell::new(Environment::new()))),
+            globals: Rc::clone(&globals),
+            environment: RefCell::new(Rc::clone(&globals)),
             is_repl,
             is_last_statement: false,
         }
@@ -72,7 +78,7 @@ impl Interpreter {
                 string.to_owned()
             }
             Some(DataType::Nil) => "nil".to_string(),
-            Some(Function) => "Function".to_string(),
+            Some(_) => "Function".to_string(),
             None => "nil".to_string(),
         };
         result
@@ -122,6 +128,7 @@ impl Interpreter {
             }
             Some(DataType::Nil) => "nil".red().to_string(),
             Some(DataType::Function(_)) => "Function".purple().to_string(),
+            Some(DataType::Native(_)) => "Native".purple().to_string(),
             None => "nil".red().to_string(),
         };
         result
@@ -273,11 +280,12 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_call_expr(&mut self, expr: &Call) -> VisitorTypes {
-        let mut callee = match expr.callee.accept(self) {
-            VisitorTypes::DataType(d) => d,
-            _ => panic!("Impossible state calle should always give back a datatype."),
-        };
         let token = expr.paren.dup();
+        let callee = match expr.callee.accept(self) {
+            VisitorTypes::DataType(d) => d,
+            // TODO get function name here.
+            _ => return VisitorTypes::RunTimeError { token: Some(token.dup()), msg: format!("Unknown function.", ) },
+        };
         let mut arguments = Vec::<DataType>::new();
         for expr in &expr.arguments {
             let data_type = match expr.accept(self) {
@@ -289,10 +297,11 @@ impl ExprVisitor for Interpreter {
             }
             // LoxCallable function = (LoxCallable)callee;
         }
-        let function: LoxFunction;
+        let function: Rc<dyn LoxCallable>;
         if let Some(c) = callee {
             function = match c {
-                DataType::Function(f) => f,
+                DataType::Function(f) => Rc::new(f),
+                DataType::Native(n) => n.functions,
                 _ => {
                     return VisitorTypes::RunTimeError {
                         token: Some(token),
@@ -312,7 +321,7 @@ impl ExprVisitor for Interpreter {
                 token: Some(token),
                 msg: format!(
                     "Expected {} arguments but got {}.",
-                    function.arity,
+                    function.arity(),
                     arguments.len()
                 ),
             };

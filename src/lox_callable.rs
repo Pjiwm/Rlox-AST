@@ -1,6 +1,8 @@
-use crate::{interpreter::Interpreter, token::DataType};
+use std::{rc::Rc, fmt::Debug};
 
-pub trait LoxCallable {
+use crate::{interpreter::Interpreter, token::DataType};
+// #[derive(Debug)]
+pub trait LoxCallable: Debug {
     fn call(&self, interpreter: &Interpreter, arguments: Vec<DataType>) -> DataType;
     fn arity(&self) -> usize;
 }
@@ -9,12 +11,19 @@ pub trait LoxCallable {
 pub struct LoxFunction {
     pub arity: usize
 }
+
+
 impl LoxCallable for LoxFunction {
     fn call(&self, interpreter: &Interpreter, arguments: Vec<DataType>) -> DataType {
         DataType::Nil
     }
-
+    
     fn arity(&self) -> usize {
         self.arity
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct LoxNative {
+    pub functions: Rc<dyn LoxCallable>,
 }

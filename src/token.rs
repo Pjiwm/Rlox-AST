@@ -1,7 +1,7 @@
 use core::fmt::Debug;
 use strum_macros::Display;
 
-use crate::lox_callable::LoxFunction;
+use crate::lox_callable::{LoxFunction, LoxNative};
 
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -86,7 +86,8 @@ pub enum DataType {
     Number(f64),
     Bool(bool),
     Nil,
-    Function(LoxFunction)
+    Function(LoxFunction),
+    Native(LoxNative)
 }
 impl DataType {
     pub fn to_string(&self) -> String {
@@ -96,6 +97,7 @@ impl DataType {
             DataType::Bool(b) => b.to_string(),
             DataType::Nil => "nil".to_string(),
             DataType::Function(_) => "Function".to_string(),
+            DataType::Native(_) => "Native".to_string(),
         }
     }
 }
