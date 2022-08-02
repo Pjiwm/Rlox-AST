@@ -13,12 +13,6 @@ pub enum VisitorTypes {
     Void(()),
 }
 
-impl VisitorTypes {
-    pub fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-
 pub trait ExprVisitor {
     fn visit_assign_expr(&mut self, expr: &Assign) -> VisitorTypes;
     fn visit_binary_expr(&mut self, expr: &Binary) -> VisitorTypes;
@@ -349,10 +343,11 @@ impl Stmt for Expression {
 pub struct Function {
     pub name: Token,
     pub param: Vec<Token>,
-    pub body: Box<dyn Stmt>,
+    // TODO find out if vec of body needs another smartpointer.
+    pub body: Vec<Box<dyn Stmt>>,
 }
 impl Function {
-    pub fn new(name: Token, param: Vec<Token>, body: Box<dyn Stmt>) -> Self {
+    pub fn new(name: Token, param: Vec<Token>, body: Vec<Box<dyn Stmt>>) -> Self {
         Self { name, param, body }
     }
 }
