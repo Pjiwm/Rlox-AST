@@ -12,7 +12,8 @@ use crate::{
     environment::Environment,
     error,
     lox_callable::{LoxCallable, LoxFunction, LoxNative},
-    token::{DataType, Token, TokenType}, native_functions::Clock,
+    native_functions::Clock,
+    token::{DataType, Token, TokenType},
 };
 pub struct Interpreter {
     pub globals: Rc<RefCell<Environment>>,
@@ -23,7 +24,9 @@ pub struct Interpreter {
 impl Interpreter {
     pub fn new(is_repl: bool) -> Interpreter {
         let globals = Rc::new(RefCell::new(Environment::new()));
-        let clock = DataType::Native(LoxNative { functions: Rc::new(Clock {}) });
+        let clock = DataType::Native(LoxNative {
+            functions: Rc::new(Clock {}),
+        });
         globals.borrow_mut().define("clock".to_string(), clock);
 
         Interpreter {
@@ -283,8 +286,10 @@ impl ExprVisitor for Interpreter {
         let token = expr.paren.dup();
         let callee = match expr.callee.accept(self) {
             VisitorTypes::DataType(d) => d,
-            // TODO get function name here.
-            _ => return VisitorTypes::RunTimeError { token: Some(token.dup()), msg: format!("Unknown function.", ) },
+            VisitorTypes::RunTimeError { token, msg } => {
+                return VisitorTypes::RunTimeError { token, msg }
+            }
+            _ => panic!("Interpreter entered impossible state."),
         };
         let mut arguments = Vec::<DataType>::new();
         for expr in &expr.arguments {
