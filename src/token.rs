@@ -1,7 +1,7 @@
 use core::fmt::Debug;
 use strum_macros::Display;
 
-use crate::lox_callable::{LoxFunction, LoxNative};
+use crate::function::{LoxFunction, LoxNative};
 
 #[derive(Debug, Clone)]
 pub struct Token {

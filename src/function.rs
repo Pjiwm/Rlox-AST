@@ -1,7 +1,6 @@
 use std::{rc::Rc, fmt::Debug};
-
 use crate::{interpreter::Interpreter, token::DataType};
-// #[derive(Debug)]
+
 pub trait LoxCallable: Debug {
     fn call(&self, interpreter: &Interpreter, arguments: Vec<DataType>) -> DataType;
     fn arity(&self) -> usize;

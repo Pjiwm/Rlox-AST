@@ -11,7 +11,7 @@ use crate::{
     ast::*,
     environment::Environment,
     error,
-    lox_callable::{LoxCallable, LoxFunction, LoxNative},
+    function::{LoxCallable, LoxFunction, LoxNative},
     native_functions::Clock,
     token::{DataType, Token, TokenType},
 };

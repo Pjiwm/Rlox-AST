@@ -1,6 +1,6 @@
 use std::time::SystemTime;
 
-use crate::{lox_callable::LoxCallable, token::DataType};
+use crate::{function::LoxCallable, token::DataType};
 #[derive(Debug)]
 pub struct Clock;
 impl LoxCallable for Clock {

@@ -10,7 +10,7 @@ mod ast_printer;
 mod environment;
 mod error;
 mod interpreter;
-mod lox_callable;
+mod function;
 mod parser;
 mod repl;
 mod scanner;
