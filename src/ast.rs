@@ -343,10 +343,10 @@ impl Stmt for Expression {
 pub struct Function {
     pub name: Token,
     pub params: Vec<Token>,
-    pub body: Box<Vec<Box<dyn Stmt>>>,
+    pub body: Vec<Box<dyn Stmt>>,
 }
 impl Function {
-    pub fn new(name: Token, param: Vec<Token>, body: Box<Vec<Box<dyn Stmt>>>) -> Self {
+    pub fn new(name: Token, param: Vec<Token>, body: Vec<Box<dyn Stmt>>) -> Self {
         Self { name, params: param, body }
     }
 }

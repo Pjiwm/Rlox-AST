@@ -1,8 +1,8 @@
 use crate::{
-    ast::Function,
+    ast::{Function, Stmt},
     environment::{self, Environment},
     interpreter::Interpreter,
-    token::DataType,
+    token::{DataType, Token},
 };
 use std::{
     borrow::{Borrow, BorrowMut},
@@ -17,44 +17,51 @@ pub trait LoxCallable: Debug + Display {
 
 #[derive(Clone)]
 pub struct LoxFunction {
-    declaration: Rc<Function>,
+    // declaration: &Function,
+    body: Rc<Box<Vec<Box<dyn Stmt>>>>,
+    params: Vec<Token>,
+    name: Box<Token>
 }
 
 impl LoxFunction {
-    fn new(declaration: Rc<Function>) -> LoxFunction {
-        LoxFunction { declaration }
+    pub fn new(body: Vec<Box<dyn Stmt>>, params: Vec<Token>, name: Box<Token>) -> LoxFunction {
+        LoxFunction {
+            body: Rc::new(Box::new(body)),
+            params,
+            name
+        }
     }
 }
 
 impl LoxCallable for LoxFunction {
     fn call(&self, interpreter: &mut Interpreter, arguments: Vec<DataType>) -> DataType {
         let mut environment = Environment::new_enclosing(Rc::clone(&interpreter.globals));
-        for (i, token) in self.declaration.params.iter().enumerate() {
+        for (i, token) in self.params.iter().enumerate() {
             let value = match arguments.get(i) {
                 Some(d) => d.clone(),
                 None => DataType::Nil,
             };
             environment.define(token.dup().lexeme, value);
         }
-        let statements = Rc::new(&self.declaration.body);
+        let statements = Rc::new(&self.body);
         interpreter.execute_block(&statements, environment);
         DataType::Nil
     }
 
     fn arity(&self) -> usize {
-        self.declaration.params.len()
+        self.params.len()
     }
 }
 
 impl Display for LoxFunction {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "<Function {}>", self.declaration.name.lexeme)
+        write!(f, "<Function {}>", self.name.lexeme)
     }
 }
 
 impl Debug for LoxFunction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let value = format!("<Function {}>", self.declaration.name.lexeme);
+        let value = format!("<Function {}>", self.name.lexeme);
         f.debug_struct("LoxFunction")
             .field("name:", &value)
             .finish()

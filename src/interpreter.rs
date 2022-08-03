@@ -1,19 +1,20 @@
 use std::{
     cell::RefCell,
     io::{self, Error, ErrorKind},
-    rc::Rc,
+    rc::Rc, ops::DerefMut,
 };
 
 use colored::Colorize;
+use lazy_static::__Deref;
 use substring::Substring;
 
 use crate::{
     ast::*,
     environment::Environment,
     error,
-    function::{LoxCallable, LoxNative},
+    function::{LoxCallable, LoxFunction, LoxNative},
     native_functions::Clock,
-    token::{DataType, Token, TokenType},
+    token::{self, DataType, Token, TokenType},
 };
 pub struct Interpreter {
     pub globals: Rc<RefCell<Environment>>,
@@ -135,7 +136,11 @@ impl Interpreter {
             }
             Some(DataType::Nil) => "nil".red().to_string(),
             Some(DataType::Function(f)) => format!("{}", f).on_white().black().to_string(),
-            Some(DataType::Native(n)) => format!("{}", n.function).on_white().black().bold().to_string(),
+            Some(DataType::Native(n)) => format!("{}", n.function)
+                .on_white()
+                .black()
+                .bold()
+                .to_string(),
             None => "nil".red().to_string(),
         };
         result
@@ -446,7 +451,18 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_function_stmt(&mut self, stmt: &Function) -> VisitorTypes {
-        todo!()
+        // TODO fix LoxFunction constructor and this mess...
+        let params: Vec<Token> = stmt.params.deref().to_vec();
+        let body = stmt.body;
+        let name = Box::new(stmt.name.dup());
+        // let body: Vec<Box<dyn Stmt>> = stmt.body.deref_mut();
+        let x = Rc::new(Rc::new(stmt));
+        let function = LoxFunction::new(body, params, name);
+        self.environment
+            .borrow()
+            .borrow_mut()
+            .define(stmt.name.dup().lexeme, DataType::Function(function));
+        VisitorTypes::Void(())
     }
 
     fn visit_if_stmt(&mut self, stmt: &If) -> VisitorTypes {

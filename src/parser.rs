@@ -254,9 +254,9 @@ impl<'a> Parser<'a> {
         self.consume(TokenType::RightParen, "Expect ')' after parameters.")?;
         let block_error = format!("Expect '{{' before {kind} body.");
         self.consume(TokenType::LeftBrace, block_error.as_str())?;
-        
+
         let body = self.block()?;
-        Ok(Box::new(Function::new(name, parameters, body)))
+        Ok(Box::new(Function::new(name, parameters, *body)))
     }
 
     fn block(&mut self) -> Result<Box<Vec<Box<dyn Stmt>>>, Error> {
