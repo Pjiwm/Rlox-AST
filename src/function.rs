@@ -1,28 +1,67 @@
-use std::{rc::Rc, fmt::Debug};
-use crate::{interpreter::Interpreter, token::DataType};
+use crate::{
+    ast::Function,
+    environment::{self, Environment},
+    interpreter::Interpreter,
+    token::DataType,
+};
+use std::{
+    borrow::{Borrow, BorrowMut},
+    fmt::{self, Debug, Display, Formatter, Pointer},
+    rc::Rc,
+};
 
-pub trait LoxCallable: Debug {
-    fn call(&self, interpreter: &Interpreter, arguments: Vec<DataType>) -> DataType;
+pub trait LoxCallable: Debug + Display {
+    fn call(&self, interpreter: &mut Interpreter, arguments: Vec<DataType>) -> DataType;
     fn arity(&self) -> usize;
 }
-// TODO polish LoxFunction struct, as we only created it so far to work on the interpreter.
-#[derive(Debug, Clone)]
+
+#[derive(Clone)]
 pub struct LoxFunction {
-    pub arity: usize
+    declaration: Rc<Function>,
 }
 
+impl LoxFunction {
+    fn new(declaration: Rc<Function>) -> LoxFunction {
+        LoxFunction { declaration }
+    }
+}
 
 impl LoxCallable for LoxFunction {
-    fn call(&self, interpreter: &Interpreter, arguments: Vec<DataType>) -> DataType {
+    fn call(&self, interpreter: &mut Interpreter, arguments: Vec<DataType>) -> DataType {
+        let mut environment = Environment::new_enclosing(Rc::clone(&interpreter.globals));
+        for (i, token) in self.declaration.params.iter().enumerate() {
+            let value = match arguments.get(i) {
+                Some(d) => d.clone(),
+                None => DataType::Nil,
+            };
+            environment.define(token.dup().lexeme, value);
+        }
+        let statements = Rc::new(&self.declaration.body);
+        interpreter.execute_block(&statements, environment);
         DataType::Nil
     }
-    
+
     fn arity(&self) -> usize {
-        self.arity
+        self.declaration.params.len()
+    }
+}
+
+impl Display for LoxFunction {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "<Function {}>", self.declaration.name.lexeme)
+    }
+}
+
+impl Debug for LoxFunction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let value = format!("<Function {}>", self.declaration.name.lexeme);
+        f.debug_struct("LoxFunction")
+            .field("name:", &value)
+            .finish()
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct LoxNative {
-    pub functions: Rc<dyn LoxCallable>,
+    pub function: Rc<dyn LoxCallable>,
 }

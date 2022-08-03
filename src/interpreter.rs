@@ -11,7 +11,7 @@ use crate::{
     ast::*,
     environment::Environment,
     error,
-    function::{LoxCallable, LoxFunction, LoxNative},
+    function::{LoxCallable, LoxNative},
     native_functions::Clock,
     token::{DataType, Token, TokenType},
 };
@@ -25,7 +25,7 @@ impl Interpreter {
     pub fn new(is_repl: bool) -> Interpreter {
         let globals = Rc::new(RefCell::new(Environment::new()));
         let clock = DataType::Native(LoxNative {
-            functions: Rc::new(Clock {}),
+            function: Rc::new(Clock::new("Clock".to_string())),
         });
         globals.borrow_mut().define("clock".to_string(), clock);
 
@@ -44,16 +44,20 @@ impl Interpreter {
         }
     }
 
-    fn execute(&mut self, stmt: &Box<dyn Stmt>) {
-        stmt.accept(self);
-    }
-
-    fn execute_block(&mut self, statements: &Box<Vec<Box<dyn Stmt>>>, environment: Environment) {
+    pub fn execute_block(
+        &mut self,
+        statements: &Box<Vec<Box<dyn Stmt>>>,
+        environment: Environment,
+    ) {
         let previous = self.environment.replace(Rc::new(RefCell::new(environment)));
         for stmt in statements.iter() {
             self.execute(stmt.clone());
         }
         self.environment.replace(previous);
+    }
+
+    fn execute(&mut self, stmt: &Box<dyn Stmt>) {
+        stmt.accept(self);
     }
 
     fn stringify(&self, visitor_type: VisitorTypes) -> Result<String, Error> {
@@ -130,8 +134,8 @@ impl Interpreter {
                 string.to_string()
             }
             Some(DataType::Nil) => "nil".red().to_string(),
-            Some(DataType::Function(_)) => "Function".purple().to_string(),
-            Some(DataType::Native(_)) => "Native".purple().to_string(),
+            Some(DataType::Function(f)) => format!("{}", f).on_white().black().to_string(),
+            Some(DataType::Native(n)) => format!("{}", n.function).on_white().black().bold().to_string(),
             None => "nil".red().to_string(),
         };
         result
@@ -306,7 +310,7 @@ impl ExprVisitor for Interpreter {
         if let Some(c) = callee {
             function = match c {
                 DataType::Function(f) => Rc::new(f),
-                DataType::Native(n) => n.functions,
+                DataType::Native(n) => n.function,
                 _ => {
                     return VisitorTypes::RunTimeError {
                         token: Some(token),
@@ -332,7 +336,7 @@ impl ExprVisitor for Interpreter {
             };
         }
 
-        VisitorTypes::DataType(Some(function.call(&self, arguments)))
+        VisitorTypes::DataType(Some(function.call(self, arguments)))
     }
 
     fn visit_get_expr(&mut self, expr: &Get) -> VisitorTypes {

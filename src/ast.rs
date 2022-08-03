@@ -342,12 +342,12 @@ impl Stmt for Expression {
 
 pub struct Function {
     pub name: Token,
-    pub param: Vec<Token>,
+    pub params: Vec<Token>,
     pub body: Box<Vec<Box<dyn Stmt>>>,
 }
 impl Function {
     pub fn new(name: Token, param: Vec<Token>, body: Box<Vec<Box<dyn Stmt>>>) -> Self {
-        Self { name, param, body }
+        Self { name, params: param, body }
     }
 }
 impl Stmt for Function {
