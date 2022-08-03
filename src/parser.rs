@@ -2,11 +2,12 @@ use std::io::{self, Error, ErrorKind};
 
 use crate::{
     ast::{
-        Assign, Binary, Block, Call, Expr, Expression, Grouping, If, Literal, Logical, Print, Stmt,
-        Unary, Var, Variable, While, Function,
+        Assign, Binary, Block, Call, Expr, Expression, Function, Grouping, If, Literal, Logical,
+        Print, Stmt, Unary, Var, Variable, While,
     },
-    error::parse_error,
-    token::{DataType, Token, TokenType}, function,
+    error::{self, parse_error},
+    function,
+    token::{DataType, Token, TokenType},
 };
 
 pub struct Parser<'a> {
@@ -224,11 +225,38 @@ impl<'a> Parser<'a> {
         self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
         Ok(Box::new(Expression::new(expr)))
     }
-    // TODO Describe and finish writing 'function' function.
+    /// Grabs the current token which is the name of the function. In the assignment function which this
+    /// function has been called it's already established the following tokens are part of a function.
+    /// The parser advances and it will now check for parameters.
+    /// This is done by looping in a do while loop style until the parser hits no more comma's ','.
+    /// Function parameters are split by a comma, when it's done looking for parameters the parser consumes twice.
+    /// To make sure the the function parameters are closed of by a closing parenthesis ')' and followed by a opening
+    /// curly brace. As the next block is the body of the function.
+    /// The block function is called to grab the functions body and the established paremeters, body and function name
+    /// are put into a Function object.
     fn function(&mut self, kind: &str) -> Result<Box<dyn Stmt>, Error> {
         let err_msg = format!("Expect {} name.", kind);
-        let name = self.consume(TokenType::Identifier, err_msg.as_str());
-        todo!()
+        let name = self.consume(TokenType::Identifier, err_msg.as_str())?;
+        let mut parameters = Vec::<Token>::new();
+
+        if !self.check(TokenType::RightParen) {
+            loop {
+                if parameters.len() >= 255 {
+                    error::parse_error(self.peek(), "Can't have more than 255 parameters.");
+                }
+                parameters.push(self.consume(TokenType::Identifier, "Expect parameter name.")?);
+
+                if !self.matches(&[TokenType::Comma]) {
+                    break;
+                }
+            }
+        }
+        self.consume(TokenType::RightParen, "Expect ')' after parameters.")?;
+        let block_error = format!("Expect '{{' before {kind} body.");
+        self.consume(TokenType::LeftBrace, block_error.as_str())?;
+        
+        let body = self.block()?;
+        Ok(Box::new(Function::new(name, parameters, body)))
     }
 
     fn block(&mut self) -> Result<Box<Vec<Box<dyn Stmt>>>, Error> {

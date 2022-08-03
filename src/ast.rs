@@ -343,11 +343,10 @@ impl Stmt for Expression {
 pub struct Function {
     pub name: Token,
     pub param: Vec<Token>,
-    // TODO find out if vec of body needs another smartpointer.
-    pub body: Vec<Box<dyn Stmt>>,
+    pub body: Box<Vec<Box<dyn Stmt>>>,
 }
 impl Function {
-    pub fn new(name: Token, param: Vec<Token>, body: Vec<Box<dyn Stmt>>) -> Self {
+    pub fn new(name: Token, param: Vec<Token>, body: Box<Vec<Box<dyn Stmt>>>) -> Self {
         Self { name, param, body }
     }
 }
