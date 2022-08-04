@@ -1,4 +1,7 @@
-use std::{io::{self, Error, ErrorKind}, rc::Rc};
+use std::{
+    io::{self, Error, ErrorKind},
+    rc::Rc,
+};
 
 use crate::{
     ast::{
@@ -235,8 +238,11 @@ impl<'a> Parser<'a> {
     /// The block function is called to grab the functions body and the established paremeters, body and function name
     /// are put into a Function object.
     fn function(&mut self, kind: &str) -> Result<Rc<dyn Stmt>, Error> {
-        let err_msg = format!("Expect {} name.", kind);
-        let name = self.consume(TokenType::Identifier, err_msg.as_str())?;
+        let kind_error = format!("Expect {} name.", kind);
+        let name = self.consume(TokenType::Identifier, kind_error.as_str())?;
+        let paren_error = format!("Expect '(' after {kind} name.");
+        self.consume(TokenType::LeftParen, paren_error.as_str())?;
+
         let mut parameters = Vec::<Token>::new();
 
         if !self.check(TokenType::RightParen) {
