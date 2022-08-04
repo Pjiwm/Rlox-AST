@@ -1,4 +1,4 @@
-use std::{env, io, process, str};
+use std::{env, io, process, str, rc::Rc};
 
 use ast::{Binary, Grouping, Literal, Unary};
 
@@ -69,18 +69,18 @@ pub fn run(source: &str, is_repl: bool) -> io::Result<()> {
 fn _demo_ast() {
     let expression = _binary_expression_sum();
     let mut printer = ast_printer::AstPrinter::_new();
-    let expression_str = printer._print(Box::new(expression));
+    let expression_str = printer._print(Rc::new(expression));
     println!("{}", expression_str);
 }
 
 fn _binary_expression_multi() -> Binary {
     Binary::new(
-        Box::new(Unary::new(
+        Rc::new(Unary::new(
             Token::new(TokenType::Minus, "-".to_string(), None, 1),
-            Box::new(Literal::new(Some(DataType::Number(123.0)))),
+            Rc::new(Literal::new(Some(DataType::Number(123.0)))),
         )),
         Token::new(TokenType::Star, "*".to_string(), None, 1),
-        Box::new(Grouping::new(Box::new(Literal::new(Some(
+        Rc::new(Grouping::new(Rc::new(Literal::new(Some(
             DataType::Number(45.67),
         ))))),
     )
@@ -88,8 +88,8 @@ fn _binary_expression_multi() -> Binary {
 
 fn _binary_expression_sum() -> Binary {
     Binary::new(
-        Box::new(Literal::new(Some(DataType::Number(1.0)))),
+        Rc::new(Literal::new(Some(DataType::Number(1.0)))),
         Token::new(TokenType::Plus, "+".to_string(), None, 1),
-        Box::new(Literal::new(Some(DataType::Number(2.0)))),
+        Rc::new(Literal::new(Some(DataType::Number(2.0)))),
     )
 }

@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{ast::*, token::DataType};
 
 pub struct AstPrinter;
@@ -6,7 +8,7 @@ impl AstPrinter {
         Self
     }
 
-    pub fn _print(&mut self, expr: Box<dyn Expr>) -> String {
+    pub fn _print(&mut self, expr: Rc<dyn Expr>) -> String {
         let return_string = match expr.accept(self) {
             VisitorTypes::String(s) => s,
             VisitorTypes::DataType(_) => "Incorrect expression".to_string(),

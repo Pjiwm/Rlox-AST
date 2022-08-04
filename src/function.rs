@@ -17,18 +17,17 @@ pub trait LoxCallable: Debug + Display {
 
 #[derive(Clone)]
 pub struct LoxFunction {
-    // declaration: &Function,
-    body: Rc<Box<Vec<Box<dyn Stmt>>>>,
-    params: Vec<Token>,
+    body: Rc<Vec<Rc<dyn Stmt>>>,
+    params: Rc<Vec<Token>>,
     name: Box<Token>
 }
 
 impl LoxFunction {
-    pub fn new(body: Vec<Box<dyn Stmt>>, params: Vec<Token>, name: Box<Token>) -> LoxFunction {
+    pub fn new(declaration: &Function) -> LoxFunction {
         LoxFunction {
-            body: Rc::new(Box::new(body)),
-            params,
-            name
+            body: Rc::clone(&declaration.body),
+            params: Rc::clone(&declaration.params),
+            name: Box::new(declaration.name.dup())
         }
     }
 }

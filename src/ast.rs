@@ -1,4 +1,4 @@
-use std::any::Any;
+use std::{any::Any, rc::Rc};
 
 use crate::token::{DataType, Token};
 
@@ -30,10 +30,10 @@ pub trait ExprVisitor {
 
 pub struct Assign {
     pub name: Token,
-    pub value: Box<dyn Expr>,
+    pub value: Rc<dyn Expr>,
 }
 impl Assign {
-    pub fn new(name: Token, value: Box<dyn Expr>) -> Self {
+    pub fn new(name: Token, value: Rc<dyn Expr>) -> Self {
         Self { name, value }
     }
 }
@@ -48,12 +48,12 @@ impl Expr for Assign {
 }
 
 pub struct Binary {
-    pub left: Box<dyn Expr>,
+    pub left: Rc<dyn Expr>,
     pub operator: Token,
-    pub right: Box<dyn Expr>,
+    pub right: Rc<dyn Expr>,
 }
 impl Binary {
-    pub fn new(left: Box<dyn Expr>, operator: Token, right: Box<dyn Expr>) -> Self {
+    pub fn new(left: Rc<dyn Expr>, operator: Token, right: Rc<dyn Expr>) -> Self {
         Self {
             left,
             operator,
@@ -72,12 +72,12 @@ impl Expr for Binary {
 }
 
 pub struct Call {
-    pub callee: Box<dyn Expr>,
+    pub callee: Rc<dyn Expr>,
     pub paren: Token,
-    pub arguments: Vec<Box<dyn Expr>>,
+    pub arguments: Vec<Rc<dyn Expr>>,
 }
 impl Call {
-    pub fn new(callee: Box<dyn Expr>, paren: Token, arguments: Vec<Box<dyn Expr>>) -> Self {
+    pub fn new(callee: Rc<dyn Expr>, paren: Token, arguments: Vec<Rc<dyn Expr>>) -> Self {
         Self {
             callee,
             paren,
@@ -96,11 +96,11 @@ impl Expr for Call {
 }
 
 pub struct Get {
-    pub object: Box<dyn Expr>,
+    pub object: Rc<dyn Expr>,
     pub name: Token,
 }
 impl Get {
-    pub fn new(object: Box<dyn Expr>, name: Token) -> Self {
+    pub fn new(object: Rc<dyn Expr>, name: Token) -> Self {
         Self { object, name }
     }
 }
@@ -115,10 +115,10 @@ impl Expr for Get {
 }
 
 pub struct Grouping {
-    pub expression: Box<dyn Expr>,
+    pub expression: Rc<dyn Expr>,
 }
 impl Grouping {
-    pub fn new(expression: Box<dyn Expr>) -> Self {
+    pub fn new(expression: Rc<dyn Expr>) -> Self {
         Self { expression }
     }
 }
@@ -151,12 +151,12 @@ impl Expr for Literal {
 }
 
 pub struct Logical {
-    pub left: Box<dyn Expr>,
+    pub left: Rc<dyn Expr>,
     pub operator: Token,
-    pub right: Box<dyn Expr>,
+    pub right: Rc<dyn Expr>,
 }
 impl Logical {
-    pub fn new(left: Box<dyn Expr>, operator: Token, right: Box<dyn Expr>) -> Self {
+    pub fn new(left: Rc<dyn Expr>, operator: Token, right: Rc<dyn Expr>) -> Self {
         Self {
             left,
             operator,
@@ -175,12 +175,12 @@ impl Expr for Logical {
 }
 
 pub struct Set {
-    pub object: Box<dyn Expr>,
+    pub object: Rc<dyn Expr>,
     pub name: Token,
-    pub value: Box<dyn Expr>,
+    pub value: Rc<dyn Expr>,
 }
 impl Set {
-    pub fn new(object: Box<dyn Expr>, name: Token, value: Box<dyn Expr>) -> Self {
+    pub fn new(object: Rc<dyn Expr>, name: Token, value: Rc<dyn Expr>) -> Self {
         Self {
             object,
             name,
@@ -237,10 +237,10 @@ impl Expr for This {
 
 pub struct Unary {
     pub operator: Token,
-    pub right: Box<dyn Expr>,
+    pub right: Rc<dyn Expr>,
 }
 impl Unary {
-    pub fn new(operator: Token, right: Box<dyn Expr>) -> Self {
+    pub fn new(operator: Token, right: Rc<dyn Expr>) -> Self {
         Self { operator, right }
     }
 }
@@ -288,10 +288,10 @@ pub trait StmtVisitor {
     fn visit_while_stmt(&mut self, stmt: &While) -> VisitorTypes;
 }
 pub struct Block {
-    pub statements: Box<Vec<Box<dyn Stmt>>>,
+    pub statements: Rc<Vec<Rc<dyn Stmt>>>,
 }
 impl Block {
-    pub fn new(statements: Box<Vec<Box<dyn Stmt>>>) -> Self {
+    pub fn new(statements: Rc<Vec<Rc<dyn Stmt>>>) -> Self {
         Self { statements }
     }
 }
@@ -304,14 +304,14 @@ impl Stmt for Block {
 pub struct Class {
     pub name: Token,
     // Check if these works, cause they might not...
-    pub methods: Vec<Box<Function>>,
-    pub super_class: Option<Box<Variable>>,
+    pub methods: Vec<Rc<Function>>,
+    pub super_class: Option<Rc<Variable>>,
 }
 impl Class {
     pub fn new(
         name: Token,
-        methods: Vec<Box<Function>>,
-        super_class: Option<Box<Variable>>,
+        methods: Vec<Rc<Function>>,
+        super_class: Option<Rc<Variable>>,
     ) -> Self {
         Self {
             name,
@@ -327,10 +327,10 @@ impl Stmt for Class {
 }
 
 pub struct Expression {
-    pub expression: Box<dyn Expr>,
+    pub expression: Rc<dyn Expr>,
 }
 impl Expression {
-    pub fn new(expression: Box<dyn Expr>) -> Self {
+    pub fn new(expression: Rc<dyn Expr>) -> Self {
         Self { expression }
     }
 }
@@ -342,11 +342,11 @@ impl Stmt for Expression {
 
 pub struct Function {
     pub name: Token,
-    pub params: Vec<Token>,
-    pub body: Vec<Box<dyn Stmt>>,
+    pub params: Rc<Vec<Token>>,
+    pub body: Rc<Vec<Rc<dyn Stmt>>>,
 }
 impl Function {
-    pub fn new(name: Token, param: Vec<Token>, body: Vec<Box<dyn Stmt>>) -> Self {
+    pub fn new(name: Token, param: Rc<Vec<Token>>, body: Rc<Vec<Rc<dyn Stmt>>>) -> Self {
         Self { name, params: param, body }
     }
 }
@@ -357,15 +357,15 @@ impl Stmt for Function {
 }
 
 pub struct If {
-    pub condition: Box<dyn Expr>,
-    pub then_branch: Box<dyn Stmt>,
-    pub else_branch: Option<Box<dyn Stmt>>,
+    pub condition: Rc<dyn Expr>,
+    pub then_branch: Rc<dyn Stmt>,
+    pub else_branch: Option<Rc<dyn Stmt>>,
 }
 impl If {
     pub fn new(
-        condition: Box<dyn Expr>,
-        then_branch: Box<dyn Stmt>,
-        else_branch: Option<Box<dyn Stmt>>,
+        condition: Rc<dyn Expr>,
+        then_branch: Rc<dyn Stmt>,
+        else_branch: Option<Rc<dyn Stmt>>,
     ) -> Self {
         Self {
             condition,
@@ -381,10 +381,10 @@ impl Stmt for If {
 }
 
 pub struct Print {
-    pub expression: Box<dyn Expr>,
+    pub expression: Rc<dyn Expr>,
 }
 impl Print {
-    pub fn new(expression: Box<dyn Expr>) -> Self {
+    pub fn new(expression: Rc<dyn Expr>) -> Self {
         Self { expression }
     }
 }
@@ -397,11 +397,11 @@ impl Stmt for Print {
 pub struct Return {
     pub keyword: Token,
     // TODO For later: Find out if option is really needed?
-    pub value: Option<Box<dyn Expr>>,
+    pub value: Option<Rc<dyn Expr>>,
 }
 
 impl Return {
-    pub fn new(keyword: Token, value: Option<Box<dyn Expr>>) -> Self {
+    pub fn new(keyword: Token, value: Option<Rc<dyn Expr>>) -> Self {
         Self { keyword, value }
     }
 }
@@ -413,10 +413,10 @@ impl Stmt for Return {
 
 pub struct Var {
     pub name: Token,
-    pub initializer: Option<Box<dyn Expr>>,
+    pub initializer: Option<Rc<dyn Expr>>,
 }
 impl Var {
-    pub fn new(name: Token, initializer: Option<Box<dyn Expr>>) -> Self {
+    pub fn new(name: Token, initializer: Option<Rc<dyn Expr>>) -> Self {
         Self { name, initializer }
     }
 }
@@ -427,11 +427,11 @@ impl Stmt for Var {
 }
 
 pub struct While {
-    pub condition: Box<dyn Expr>,
-    pub body: Box<dyn Stmt>,
+    pub condition: Rc<dyn Expr>,
+    pub body: Rc<dyn Stmt>,
 }
 impl While {
-    pub fn new(condition: Box<dyn Expr>, body: Box<dyn Stmt>) -> Self {
+    pub fn new(condition: Rc<dyn Expr>, body: Rc<dyn Stmt>) -> Self {
         Self { condition, body }
     }
 }

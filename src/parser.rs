@@ -1,4 +1,4 @@
-use std::io::{self, Error, ErrorKind};
+use std::{io::{self, Error, ErrorKind}, rc::Rc};
 
 use crate::{
     ast::{
@@ -20,15 +20,15 @@ impl<'a> Parser<'a> {
         Parser { tokens, current: 0 }
     }
     /// Parses the tokens and returns the AST.
-    pub fn parse(&mut self) -> Result<Vec<Box<dyn Stmt>>, Error> {
-        let mut statements = Vec::<Box<dyn Stmt>>::new();
+    pub fn parse(&mut self) -> Result<Vec<Rc<dyn Stmt>>, Error> {
+        let mut statements = Vec::<Rc<dyn Stmt>>::new();
         while !self.is_at_end() {
             statements.push(self.declaration()?);
         }
         Ok(statements)
     }
     /// Returns any type of expression. This is the main entry point of the precedence tree for expressions.
-    fn expression(&mut self) -> Result<Box<dyn Expr>, Error> {
+    fn expression(&mut self) -> Result<Rc<dyn Expr>, Error> {
         self.assignment()
     }
     /// Returns a statement that's either a function- var declaration or any other statement
@@ -36,7 +36,7 @@ impl<'a> Parser<'a> {
     /// It matches if the current token is a function (fun), if it is it will return a function declaration.
     /// If not it checks if it's a var declaration.
     /// Otherwise it will return a statement by calling the statement function.
-    fn declaration(&mut self) -> Result<Box<dyn Stmt>, Error> {
+    fn declaration(&mut self) -> Result<Rc<dyn Stmt>, Error> {
         if self.matches(&[TokenType::Fun]) {
             return self.function("function");
         } else if self.matches(&[TokenType::Var]) {
@@ -55,7 +55,7 @@ impl<'a> Parser<'a> {
     /// This means that because the Token type and therefor the statement type
     /// we're dealing with is checked in this function
     /// and not in any of the other functions called below.
-    fn statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
+    fn statement(&mut self) -> Result<Rc<dyn Stmt>, Error> {
         if self.matches(&[TokenType::For]) {
             return self.for_statement();
         } else if self.matches(&[TokenType::If]) {
@@ -65,7 +65,7 @@ impl<'a> Parser<'a> {
         } else if self.matches(&[TokenType::While]) {
             self.while_statement()
         } else if self.matches(&[TokenType::LeftBrace]) {
-            Ok(Box::new(Block::new(self.block()?)))
+            Ok(Rc::new(Block::new(self.block()?)))
         // If we don't match any of the above, we're dealing with a regular statement.
         // Which just means a single expression ending with a semicolon.
         } else {
@@ -96,7 +96,7 @@ impl<'a> Parser<'a> {
     /// In the end the body is returned.
     /// The reason why While objects are created and not a 'For' object is because they contain almost
     /// the same logic.
-    fn for_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
+    fn for_statement(&mut self) -> Result<Rc<dyn Stmt>, Error> {
         self.consume(TokenType::LeftParen, "Expect '(' after 'for'.")?;
         let initializer = if self.matches(&[TokenType::Semicolon]) {
             None
@@ -123,22 +123,22 @@ impl<'a> Parser<'a> {
         let mut body = self.statement()?;
 
         if let Some(inc) = increment {
-            let vec = Box::new(vec![body, Box::new(Expression::new(inc))]);
-            body = Box::new(Block::new(vec));
+            let vec = Rc::new(vec![body, Rc::new(Expression::new(inc))]);
+            body = Rc::new(Block::new(vec));
         }
 
         if let Some(c) = condition {
-            body = Box::new(While::new(c, body));
+            body = Rc::new(While::new(c, body));
         } else {
-            body = Box::new(While::new(
-                Box::new(Literal::new(Some(DataType::Bool(true)))),
+            body = Rc::new(While::new(
+                Rc::new(Literal::new(Some(DataType::Bool(true)))),
                 body,
             ));
         };
 
         if let Some(init) = initializer {
-            let vec = Box::new(vec![init, body]);
-            body = Box::new(Block::new(vec));
+            let vec = Rc::new(vec![init, body]);
+            body = Rc::new(Block::new(vec));
         }
 
         Ok(body)
@@ -153,13 +153,13 @@ impl<'a> Parser<'a> {
     /// statement is grabbed. Recursively more else if's and an else statement can be added this way.
     /// Eventually a new If object is created using the condition expression the then_branch and an optional
     /// else_branch.
-    fn if_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
+    fn if_statement(&mut self) -> Result<Rc<dyn Stmt>, Error> {
         self.consume(TokenType::LeftParen, "Expect '(' after 'if'.")?;
         let condition = self.expression()?;
         self.consume(TokenType::RightParen, "Expect ')' after if condition.")?;
 
         let then_branch = self.statement()?;
-        let mut else_branch: Option<Box<dyn Stmt>> = None;
+        let mut else_branch: Option<Rc<dyn Stmt>> = None;
         if self.matches(&[TokenType::Else]) {
             else_branch = Some(match self.statement() {
                 Ok(e) => e,
@@ -171,22 +171,22 @@ impl<'a> Parser<'a> {
                 }
             });
         }
-        Ok(Box::new(If::new(condition, then_branch, else_branch)))
+        Ok(Rc::new(If::new(condition, then_branch, else_branch)))
     }
     /// Grabs the expression, the parser advances and via the consume function it's checked
     /// if the next token is a semicolon to finish the statement.
     /// A Print object is created using the expression and returned.
-    fn print_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
+    fn print_statement(&mut self) -> Result<Rc<dyn Stmt>, Error> {
         let value = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
-        Ok(Box::new(Print::new(value)))
+        Ok(Rc::new(Print::new(value)))
     }
     /// Consumes the current token in the parser which should be the name of the variable.
     /// Next it checks if the next token is an = token. If it is, it grabs the exprssion of the next token
     /// and applies it as the variables value.
     /// Before creating and returning the Var object, consume is called, this is to check if the next token is a semicolon.
     /// If it is not, it will throw an error, as all statements should end with a semicolon (;).
-    fn var_declaration(&mut self) -> Result<Box<dyn Stmt>, Error> {
+    fn var_declaration(&mut self) -> Result<Rc<dyn Stmt>, Error> {
         // Variable names are lexed as Identifier tokens.
         let name = self.consume(TokenType::Identifier, "Expect variable name.")?;
         let initializer = if self.matches(&[TokenType::Equal]) {
@@ -198,7 +198,7 @@ impl<'a> Parser<'a> {
             TokenType::Semicolon,
             "Expect ';' after variable declaration.",
         )?;
-        Ok(Box::new(Var::new(name.dup(), initializer)))
+        Ok(Rc::new(Var::new(name.dup(), initializer)))
     }
     /// Calls the consume function to check for a left paren. If it is not, it will throw an error.
     /// A While statements condition should be between parantheses.
@@ -209,21 +209,21 @@ impl<'a> Parser<'a> {
     /// The parser has advanced again and we call the statement function to get the body of the While statement.
     /// A statement can be a block or a single expression. Example: while (true) { ... } or while (true) print "hi";
     /// The body and condition can be used to then make a While object.
-    fn while_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
+    fn while_statement(&mut self) -> Result<Rc<dyn Stmt>, Error> {
         self.consume(TokenType::LeftParen, "Expect '(' after 'while'.")?;
         let condition = self.expression()?;
         self.consume(TokenType::RightParen, "Expect ')' after condition.")?;
         let body = self.statement()?;
-        Ok(Box::new(While::new(condition, body)))
+        Ok(Rc::new(While::new(condition, body)))
     }
     /// An expression statement is an expression made into a statement by ending it with a semicolon.
     /// The function grabs the expression by going down the precendence tree for expressions.
     /// It checks with consume if the next Token is a semicolon (;) and if it is the expression is used to make
     /// an Expression Statement object.
-    fn expression_statement(&mut self) -> Result<Box<dyn Stmt>, Error> {
+    fn expression_statement(&mut self) -> Result<Rc<dyn Stmt>, Error> {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
-        Ok(Box::new(Expression::new(expr)))
+        Ok(Rc::new(Expression::new(expr)))
     }
     /// Grabs the current token which is the name of the function. In the assignment function which this
     /// function has been called it's already established the following tokens are part of a function.
@@ -234,7 +234,7 @@ impl<'a> Parser<'a> {
     /// curly brace. As the next block is the body of the function.
     /// The block function is called to grab the functions body and the established paremeters, body and function name
     /// are put into a Function object.
-    fn function(&mut self, kind: &str) -> Result<Box<dyn Stmt>, Error> {
+    fn function(&mut self, kind: &str) -> Result<Rc<dyn Stmt>, Error> {
         let err_msg = format!("Expect {} name.", kind);
         let name = self.consume(TokenType::Identifier, err_msg.as_str())?;
         let mut parameters = Vec::<Token>::new();
@@ -256,30 +256,30 @@ impl<'a> Parser<'a> {
         self.consume(TokenType::LeftBrace, block_error.as_str())?;
 
         let body = self.block()?;
-        Ok(Box::new(Function::new(name, parameters, *body)))
+        Ok(Rc::new(Function::new(name, Rc::new(parameters), body)))
     }
 
-    fn block(&mut self) -> Result<Box<Vec<Box<dyn Stmt>>>, Error> {
-        let mut statements = Vec::<Box<dyn Stmt>>::new();
+    fn block(&mut self) -> Result<Rc<Vec<Rc<dyn Stmt>>>, Error> {
+        let mut statements = Vec::<Rc<dyn Stmt>>::new();
         while !self.check(TokenType::RightBrace) && !self.is_at_end() {
             statements.push(self.declaration()?);
         }
 
         self.consume(TokenType::RightBrace, "Expect '}' after block.")?;
-        Ok(Box::new(statements))
+        Ok(Rc::new(statements))
     }
     /// Assigns a value to a variable. If the epxression is not of type 'Variable', it will return the expression.
     /// If the expression is of type 'Variable', it will assign the value to the variable.
     /// Because the value is one position furhter than the parser has advanced via recursion the next expression can be grabbed.
     /// A new Assignment object is returned with the variable's name and the value we got via recursion.
-    fn assignment(&mut self) -> Result<Box<dyn Expr>, Error> {
+    fn assignment(&mut self) -> Result<Rc<dyn Expr>, Error> {
         let expr = self.or()?;
         if self.matches(&[TokenType::Equal]) {
             // We get the equals sign as token so we can use it for an error message.
             let equals = self.previous().dup();
             let value = self.assignment()?;
             match expr.as_any().downcast_ref::<Variable>() {
-                Some(v) => return Ok(Box::new(Assign::new(v.name.dup(), value))),
+                Some(v) => return Ok(Rc::new(Assign::new(v.name.dup(), value))),
                 None => return Err(self.parse_error(&equals, "Invalid assignment target.")),
             }
         }
@@ -291,13 +291,13 @@ impl<'a> Parser<'a> {
     /// If the current token is OR a Logical Object is made.
     /// On the left the expression we already grabbed. The operator OR
     /// and on the right a new expression is grabbed as the parser has advanced to the next token by this point.
-    fn or(&mut self) -> Result<Box<dyn Expr>, Error> {
+    fn or(&mut self) -> Result<Rc<dyn Expr>, Error> {
         let mut expr = self.and()?;
 
         while self.matches(&[TokenType::Or]) {
             let operator = self.previous().dup();
             let right = self.and()?;
-            expr = Box::new(Logical::new(expr, operator, right))
+            expr = Rc::new(Logical::new(expr, operator, right))
         }
         Ok(expr)
     }
@@ -306,13 +306,13 @@ impl<'a> Parser<'a> {
     /// It will make a Logical object with the expression we already grabbed (left),
     /// The operator AND and
     /// a expression we are grabbing as the parser has advanced. (right)
-    fn and(&mut self) -> Result<Box<dyn Expr>, Error> {
+    fn and(&mut self) -> Result<Rc<dyn Expr>, Error> {
         let mut expr = self.equality()?;
 
         while self.matches(&[TokenType::And]) {
             let operator = self.previous().dup();
             let right = self.equality()?;
-            expr = Box::new(Logical::new(expr, operator, right))
+            expr = Rc::new(Logical::new(expr, operator, right))
         }
         Ok(expr)
     }
@@ -320,12 +320,12 @@ impl<'a> Parser<'a> {
     /// If the next token is a != or == operator a new Binary object can be made.
     /// We have the expression, the operator
     /// and because the parser has advanced we grab the expression on the right side.
-    fn equality(&mut self) -> Result<Box<dyn Expr>, Error> {
+    fn equality(&mut self) -> Result<Rc<dyn Expr>, Error> {
         let mut expr = self.comparison();
         while self.matches(&[TokenType::Equalequal, TokenType::Bangequal]) {
             let operator = self.previous().dup();
             let right = self.comparison();
-            expr = Ok(Box::new(Binary::new(expr?, operator.clone(), right?)));
+            expr = Ok(Rc::new(Binary::new(expr?, operator.clone(), right?)));
         }
         expr
     }
@@ -333,7 +333,7 @@ impl<'a> Parser<'a> {
     /// If the next Token in the parser is a comparison a binary object is created.
     /// We have the expression that will be on the left side, the operator
     /// and because the parser has advanced we grab the expression on the right side.
-    fn comparison(&mut self) -> Result<Box<dyn Expr>, Error> {
+    fn comparison(&mut self) -> Result<Rc<dyn Expr>, Error> {
         let mut expr = self.term();
         let comparison_vec = vec![
             TokenType::Greater,
@@ -344,7 +344,7 @@ impl<'a> Parser<'a> {
         while self.matches(&comparison_vec) {
             let operator = self.previous().dup();
             let right = self.term();
-            expr = Ok(Box::new(Binary::new(expr?, operator.clone(), right?)));
+            expr = Ok(Rc::new(Binary::new(expr?, operator.clone(), right?)));
         }
         expr
     }
@@ -353,12 +353,12 @@ impl<'a> Parser<'a> {
     /// Then create a new Binary object with the current expression and the operator.
     /// Similar to the factor method, the parser has passed to the next token so we can grab the right side, by calling
     /// the factor method and it will give a right side expression.
-    fn term(&mut self) -> Result<Box<dyn Expr>, Error> {
+    fn term(&mut self) -> Result<Rc<dyn Expr>, Error> {
         let mut expr = self.factor();
         while self.matches(&[TokenType::Minus, TokenType::Plus]) {
             let operator = self.previous().dup();
             let right = self.factor();
-            expr = Ok(Box::new(Binary::new(expr?, operator.clone(), right?)));
+            expr = Ok(Rc::new(Binary::new(expr?, operator.clone(), right?)));
         }
         expr
     }
@@ -370,12 +370,12 @@ impl<'a> Parser<'a> {
     /// The binary expression contains out of the unary expression * or / and then another unary expression.
     /// Valid examples: 1 * 3, 20 / 3. "hello" - world, would also parse,
     /// however during interpretting this will be caught as an error.
-    fn factor(&mut self) -> Result<Box<dyn Expr>, Error> {
+    fn factor(&mut self) -> Result<Rc<dyn Expr>, Error> {
         let mut expr = self.unary();
         while self.matches(&[TokenType::Star, TokenType::Slash]) {
             let operator = self.previous().dup();
             let right = self.unary();
-            expr = Ok(Box::new(Binary::new(expr?, operator.clone(), right?)));
+            expr = Ok(Rc::new(Binary::new(expr?, operator.clone(), right?)));
         }
         expr
     }
@@ -384,11 +384,11 @@ impl<'a> Parser<'a> {
     /// If it does exist, it'll return an Unary expression with an operator and the expression after it
     /// example: !false, -a
     /// The reason the right hand side will not give back the same expression is because the parser has advanced already.
-    fn unary(&mut self) -> Result<Box<dyn Expr>, Error> {
+    fn unary(&mut self) -> Result<Rc<dyn Expr>, Error> {
         if self.matches(&[TokenType::Bang, TokenType::Minus]) {
             let operator = self.previous().dup();
             let right = self.unary();
-            return Ok(Box::new(Unary::new(operator.clone(), right?)));
+            return Ok(Rc::new(Unary::new(operator.clone(), right?)));
         }
         self.call()
     }
@@ -405,8 +405,8 @@ impl<'a> Parser<'a> {
     /// This new argument is given from the expression function. Everytime this function is called the parser advances to the next token.
     /// If the next token isn't a comma it will break the 'do while loop' as this means this was the last argument of the function.
     /// This is because function arguments are seperated by a comma. Example: doSomething(one, two three)
-    fn finish_call(&mut self, callee: Box<dyn Expr>) -> Result<Box<dyn Expr>, Error> {
-        let mut arguments = Vec::<Box<dyn Expr>>::new();
+    fn finish_call(&mut self, callee: Rc<dyn Expr>) -> Result<Rc<dyn Expr>, Error> {
+        let mut arguments = Vec::<Rc<dyn Expr>>::new();
         if !self.check(TokenType::RightParen) {
             // Trying a do while syntax, if bugs occur check this function.
             loop {
@@ -421,7 +421,7 @@ impl<'a> Parser<'a> {
             }
         }
         let paren = self.consume(TokenType::RightParen, "Expect ')' after arguments.")?;
-        Ok(Box::new(Call::new(callee, paren, arguments)))
+        Ok(Rc::new(Call::new(callee, paren, arguments)))
     }
     /// grabs an expression containing a datatype from primary.
     /// The parser advances and it loops unril the current token in the parser isn't a left paranthesis.
@@ -429,7 +429,7 @@ impl<'a> Parser<'a> {
     /// a functions argument list. That function takes in the callee as its parameter which is the old value of the expression, grabbed from
     /// the primary function.
     /// Whe the loop is done the new expression is returned.
-    fn call(&mut self) -> Result<Box<dyn Expr>, Error> {
+    fn call(&mut self) -> Result<Rc<dyn Expr>, Error> {
         let mut expr = self.primary();
         loop {
             if self.matches(&[TokenType::LeftParen]) {
@@ -443,31 +443,31 @@ impl<'a> Parser<'a> {
     /// Primary method returns a data value wrapped in an Unary object.
     /// This is the base of the expression tree you could say.
     /// It can be a literal (10, "hello world", false), a variable (input, age), a parenthesized expression (2 + 2)
-    fn primary(&mut self) -> Result<Box<dyn Expr>, Error> {
+    fn primary(&mut self) -> Result<Rc<dyn Expr>, Error> {
         if self.matches(&[TokenType::False]) {
-            return Ok(Box::new(Literal::new(Some(DataType::Bool(false)))));
+            return Ok(Rc::new(Literal::new(Some(DataType::Bool(false)))));
         }
         if self.matches(&[TokenType::True]) {
-            return Ok(Box::new(Literal::new(Some(DataType::Bool(true)))));
+            return Ok(Rc::new(Literal::new(Some(DataType::Bool(true)))));
         }
         if self.matches(&[TokenType::Nil]) {
-            return Ok(Box::new(Literal::new(None)));
+            return Ok(Rc::new(Literal::new(None)));
         }
 
         if self.matches(&[TokenType::Number, TokenType::String]) {
             let data_type = self.previous();
-            return Ok(Box::new(Literal::new(Some(
+            return Ok(Rc::new(Literal::new(Some(
                 data_type.clone().literal.unwrap(),
             ))));
         }
         if self.matches(&[TokenType::Identifier]) {
-            return Ok(Box::new(Variable::new(self.previous().dup())));
+            return Ok(Rc::new(Variable::new(self.previous().dup())));
         }
 
         if self.matches(&[TokenType::LeftParen]) {
             let expr = self.expression();
             self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
-            return Ok(Box::new(Grouping::new(expr?)));
+            return Ok(Rc::new(Grouping::new(expr?)));
         }
 
         Err(self.parse_error(self.peek(), "Expect expression."))

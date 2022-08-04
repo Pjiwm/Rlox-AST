@@ -38,7 +38,7 @@ impl Interpreter {
         }
     }
 
-    pub fn interpret(&mut self, statements: Vec<Box<dyn Stmt>>) {
+    pub fn interpret(&mut self, statements: Vec<Rc<dyn Stmt>>) {
         for (i, stmt) in statements.iter().enumerate() {
             self.is_last_statement = i == statements.len() - 1;
             self.execute(&stmt);
@@ -47,17 +47,17 @@ impl Interpreter {
 
     pub fn execute_block(
         &mut self,
-        statements: &Box<Vec<Box<dyn Stmt>>>,
+        statements: &Rc<Vec<Rc<dyn Stmt>>>,
         environment: Environment,
     ) {
         let previous = self.environment.replace(Rc::new(RefCell::new(environment)));
         for stmt in statements.iter() {
-            self.execute(stmt.clone());
+            self.execute(&stmt);
         }
         self.environment.replace(previous);
     }
 
-    fn execute(&mut self, stmt: &Box<dyn Stmt>) {
+    fn execute(&mut self, stmt: &Rc<dyn Stmt>) {
         stmt.accept(self);
     }
 
@@ -451,13 +451,7 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_function_stmt(&mut self, stmt: &Function) -> VisitorTypes {
-        // TODO fix LoxFunction constructor and this mess...
-        let params: Vec<Token> = stmt.params.deref().to_vec();
-        let body = stmt.body;
-        let name = Box::new(stmt.name.dup());
-        // let body: Vec<Box<dyn Stmt>> = stmt.body.deref_mut();
-        let x = Rc::new(Rc::new(stmt));
-        let function = LoxFunction::new(body, params, name);
+        let function = LoxFunction::new(stmt);
         self.environment
             .borrow()
             .borrow_mut()
