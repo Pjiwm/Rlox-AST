@@ -146,7 +146,7 @@ impl Interpreter {
             Some(t) => Some(t.clone()),
             None => None,
         };
-
+        self.runtime_error(&token_clone, msg);
         VisitorTypes::RunTimeError {
             token: token_clone,
             msg: msg.to_string(),
@@ -180,10 +180,7 @@ impl ExprVisitor for Interpreter {
                     .borrow_mut()
                     .assign(&expr.name, data_type_value.clone())
             }
-            _ => VisitorTypes::RunTimeError {
-                token: Some(expr.name.dup()),
-                msg: "Invalid assignment target.".to_string(),
-            },
+            _ => self.visitor_runtime_error(Some(&expr.name.dup()), "Invalid assignment target.")
         }
     }
 
@@ -291,7 +288,7 @@ impl ExprVisitor for Interpreter {
         let callee = match expr.callee.accept(self) {
             VisitorTypes::DataType(d) => d,
             VisitorTypes::RunTimeError { token, msg } => {
-                return VisitorTypes::RunTimeError { token, msg }
+                return self.visitor_runtime_error(token.as_ref(), &msg);
             }
             _ => panic!("Interpreter entered impossible state."),
         };
@@ -311,28 +308,23 @@ impl ExprVisitor for Interpreter {
                 DataType::Function(f) => Rc::new(f),
                 DataType::Native(n) => n.function,
                 _ => {
-                    return VisitorTypes::RunTimeError {
-                        token: Some(token),
-                        msg: "Can only call functions and classes.".to_string(),
-                    };
+                    return self.visitor_runtime_error(
+                        Some(&token),
+                        "Can only call functions and classes.",
+                    );
                 }
             }
         } else {
-            return VisitorTypes::RunTimeError {
-                token: Some(token),
-                msg: "Can only call functions and classes.".to_string(),
-            };
+            return self
+                .visitor_runtime_error(Some(&token), "Can only call functions and classes.");
         }
-
         if arguments.len() != function.arity() {
-            return VisitorTypes::RunTimeError {
-                token: Some(token),
-                msg: format!(
-                    "Expected {} arguments but got {}.",
-                    function.arity(),
-                    arguments.len()
-                ),
-            };
+            let msg = format!(
+                "Expected {} arguments but got {}.",
+                function.arity(),
+                arguments.len()
+            );
+            return self.visitor_runtime_error(Some(&token), &msg);
         }
 
         VisitorTypes::DataType(Some(function.call(self, arguments)))

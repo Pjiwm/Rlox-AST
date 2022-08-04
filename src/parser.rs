@@ -413,7 +413,6 @@ impl<'a> Parser<'a> {
     fn finish_call(&mut self, callee: Rc<dyn Expr>) -> Result<Rc<dyn Expr>, Error> {
         let mut arguments = Vec::<Rc<dyn Expr>>::new();
         if !self.check(TokenType::RightParen) {
-            // Trying a do while syntax, if bugs occur check this function.
             loop {
                 // The limit of a function's argument count is now 254. It only reports an error, it doesn't return one.
                 if arguments.len() >= 255 {
