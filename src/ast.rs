@@ -10,6 +10,7 @@ pub enum VisitorTypes {
     String(String),
     DataType(Option<DataType>),
     RunTimeError { token: Option<Token>, msg: String },
+    Return(Option<DataType>),
     Void(()),
 }
 
@@ -396,7 +397,6 @@ impl Stmt for Print {
 
 pub struct Return {
     pub keyword: Token,
-    // TODO For later: Find out if option is really needed?
     pub value: Option<Rc<dyn Expr>>,
 }
 

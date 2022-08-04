@@ -12,6 +12,7 @@ impl AstPrinter {
         let return_string = match expr.accept(self) {
             VisitorTypes::String(s) => s,
             VisitorTypes::DataType(_) => "Incorrect expression".to_string(),
+            VisitorTypes::Return(_) => "Incorrect expression".to_string(),
             VisitorTypes::RunTimeError { .. } => {
                 "Ran into Run time error: Incorrect expression".to_string()
             }
@@ -29,6 +30,7 @@ impl AstPrinter {
             let expr_str = match expr.accept(self) {
                 VisitorTypes::String(s) => s,
                 VisitorTypes::DataType(_) => "Incorrect expression".to_string(),
+                VisitorTypes::Return(_) => "Incorrect expression".to_string(),
                 VisitorTypes::RunTimeError { .. } => {
                     "Ran into Run time error: Incorrect expression".to_string()
                 }

@@ -6,7 +6,7 @@ use std::{
 use crate::{
     ast::{
         Assign, Binary, Block, Call, Expr, Expression, Function, Grouping, If, Literal, Logical,
-        Print, Stmt, Unary, Var, Variable, While,
+        Print, Return, Stmt, Unary, Var, Variable, While,
     },
     error::{self, parse_error},
     token::{DataType, Token, TokenType},
@@ -64,6 +64,8 @@ impl<'a> Parser<'a> {
             self.if_statement()
         } else if self.matches(&[TokenType::Print]) {
             self.print_statement()
+        } else if self.matches(&[TokenType::Return]) {
+            self.return_statement()
         } else if self.matches(&[TokenType::While]) {
             self.while_statement()
         } else if self.matches(&[TokenType::LeftBrace]) {
@@ -182,6 +184,22 @@ impl<'a> Parser<'a> {
         let value = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
         Ok(Rc::new(Print::new(value)))
+    }
+    /// when the return_statement function is called the parser has already passed the return keyword.
+    /// The keyword is required, because a return object stores the keyword, this is mainly for error handling.
+    /// The keyword is therefor grabbed by using the previous statement.
+    /// A value for the return object is optional, as not all functions need to return a value.
+    /// If the next token is not a semicolon a value is present, which is obtained via the expression function.
+    /// At the end it checks if the next token is a semicolon to make sure the return statement is finished.
+    /// A return object is then created and returned.
+    fn return_statement(&mut self) -> Result<Rc<dyn Stmt>, Error> {
+        let keyword = self.previous().dup();
+        let mut value = None;
+        if !self.check(TokenType::Semicolon) {
+            value = Some(self.expression()?);
+        }
+        self.consume(TokenType::Semicolon, "Expect ';' after return value.")?;
+        Ok(Rc::new(Return::new(keyword, value)))
     }
     /// Consumes the current token in the parser which should be the name of the variable.
     /// Next it checks if the next token is an = token. If it is, it grabs the exprssion of the next token

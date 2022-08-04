@@ -44,16 +44,30 @@ impl Interpreter {
         }
     }
 
-    pub fn execute_block(&mut self, statements: &Rc<Vec<Rc<dyn Stmt>>>, environment: Environment) {
+    pub fn execute_block(
+        &mut self,
+        statements: &Rc<Vec<Rc<dyn Stmt>>>,
+        environment: Environment,
+    ) -> VisitorTypes {
+        // TODO fix stack overflow here
         let previous = self.environment.replace(Rc::new(RefCell::new(environment)));
         for stmt in statements.iter() {
-            self.execute(&stmt);
+            print!("statements-");
+            match self.execute(&stmt) {
+                VisitorTypes::Return(r) => {
+                    self.environment.replace(previous);
+                    println!("Found return value: {:?}", r);
+                    return VisitorTypes::Return(r);
+                }
+                _ => (),
+            }
         }
         self.environment.replace(previous);
+        VisitorTypes::Void(())
     }
 
-    fn execute(&mut self, stmt: &Rc<dyn Stmt>) {
-        stmt.accept(self);
+    fn execute(&mut self, stmt: &Rc<dyn Stmt>) -> VisitorTypes {
+        stmt.accept(self)
     }
 
     fn stringify(&self, visitor_type: VisitorTypes) -> Result<String, Error> {
@@ -180,7 +194,7 @@ impl ExprVisitor for Interpreter {
                     .borrow_mut()
                     .assign(&expr.name, data_type_value.clone())
             }
-            _ => self.visitor_runtime_error(Some(&expr.name.dup()), "Invalid assignment target.")
+            _ => self.visitor_runtime_error(Some(&expr.name.dup()), "Invalid assignment target."),
         }
     }
 
@@ -469,7 +483,21 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_return_stmt(&mut self, stmt: &Return) -> VisitorTypes {
-        todo!()
+        stmt.accept(self);
+        if let Some(value) = stmt.value.clone() {
+            match value.accept(self) {
+                VisitorTypes::String(_) => todo!(),
+                VisitorTypes::DataType(d) => return VisitorTypes::Return(d),
+                VisitorTypes::RunTimeError { token, msg } => {
+                    return self.visitor_runtime_error(token.as_ref(), &msg);
+                }
+                VisitorTypes::Return(_) => todo!(),
+                VisitorTypes::Void(_) => todo!(),
+            }
+            // Err(LoxResult::return_value(self.evaluate(value)?))
+        } else {
+            return VisitorTypes::Return(Some(DataType::Nil));
+        }
     }
 
     fn visit_var_stmt(&mut self, stmt: &Var) -> VisitorTypes {

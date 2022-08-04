@@ -1,6 +1,6 @@
 use crate::{
-    ast::{Function, Stmt},
-    environment::{ Environment},
+    ast::{Function, Stmt, VisitorTypes},
+    environment::Environment,
     interpreter::Interpreter,
     token::{DataType, Token},
 };
@@ -18,7 +18,7 @@ pub trait LoxCallable: Debug + Display {
 pub struct LoxFunction {
     body: Rc<Vec<Rc<dyn Stmt>>>,
     params: Rc<Vec<Token>>,
-    name: Box<Token>
+    name: Box<Token>,
 }
 
 impl LoxFunction {
@@ -26,7 +26,7 @@ impl LoxFunction {
         LoxFunction {
             body: Rc::clone(&declaration.body),
             params: Rc::clone(&declaration.params),
-            name: Box::new(declaration.name.dup())
+            name: Box::new(declaration.name.dup()),
         }
     }
 }
@@ -42,8 +42,13 @@ impl LoxCallable for LoxFunction {
             environment.define(token.dup().lexeme, value);
         }
         let statements = Rc::new(&self.body);
-        interpreter.execute_block(&statements, environment);
-        DataType::Nil
+        match interpreter.execute_block(&statements, environment) {
+            VisitorTypes::Return(d) => match d {
+                Some(s) => s,
+                None => DataType::Nil,
+            },
+            _ => DataType::Nil,
+        }
     }
 
     fn arity(&self) -> usize {
