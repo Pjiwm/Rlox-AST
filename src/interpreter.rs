@@ -1,11 +1,10 @@
 use std::{
     cell::RefCell,
     io::{self, Error, ErrorKind},
-    rc::Rc, ops::DerefMut,
+    rc::Rc,
 };
 
 use colored::Colorize;
-use lazy_static::__Deref;
 use substring::Substring;
 
 use crate::{
@@ -14,7 +13,7 @@ use crate::{
     error,
     function::{LoxCallable, LoxFunction, LoxNative},
     native_functions::Clock,
-    token::{self, DataType, Token, TokenType},
+    token::{DataType, Token, TokenType},
 };
 pub struct Interpreter {
     pub globals: Rc<RefCell<Environment>>,
@@ -45,11 +44,7 @@ impl Interpreter {
         }
     }
 
-    pub fn execute_block(
-        &mut self,
-        statements: &Rc<Vec<Rc<dyn Stmt>>>,
-        environment: Environment,
-    ) {
+    pub fn execute_block(&mut self, statements: &Rc<Vec<Rc<dyn Stmt>>>, environment: Environment) {
         let previous = self.environment.replace(Rc::new(RefCell::new(environment)));
         for stmt in statements.iter() {
             self.execute(&stmt);
@@ -309,7 +304,6 @@ impl ExprVisitor for Interpreter {
             if let Some(d) = data_type {
                 arguments.push(d);
             }
-            // LoxCallable function = (LoxCallable)callee;
         }
         let function: Rc<dyn LoxCallable>;
         if let Some(c) = callee {
@@ -349,7 +343,6 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_grouping_expr(&mut self, expr: &Grouping) -> VisitorTypes {
-        // The book uses an evaluate function to execute this line of code.
         expr.expression.accept(self)
     }
 
@@ -400,7 +393,6 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_unary_expr(&mut self, expr: &Unary) -> VisitorTypes {
-        // So right now if we have a none number it just becomes 0.0...
         let right = match expr.right.accept(self) {
             VisitorTypes::DataType(d) => match d {
                 Some(v) => match v {

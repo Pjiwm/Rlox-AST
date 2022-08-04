@@ -1,12 +1,11 @@
 use crate::{
     ast::{Function, Stmt},
-    environment::{self, Environment},
+    environment::{ Environment},
     interpreter::Interpreter,
     token::{DataType, Token},
 };
 use std::{
-    borrow::{Borrow, BorrowMut},
-    fmt::{self, Debug, Display, Formatter, Pointer},
+    fmt::{self, Debug, Display, Formatter},
     rc::Rc,
 };
 

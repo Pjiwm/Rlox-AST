@@ -9,7 +9,6 @@ use crate::{
         Print, Stmt, Unary, Var, Variable, While,
     },
     error::{self, parse_error},
-    function,
     token::{DataType, Token, TokenType},
 };
 

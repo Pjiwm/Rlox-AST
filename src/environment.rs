@@ -1,5 +1,4 @@
 use std::{
-    borrow::Borrow,
     cell::RefCell,
     collections::{hash_map::Entry, HashMap},
     rc::Rc,
