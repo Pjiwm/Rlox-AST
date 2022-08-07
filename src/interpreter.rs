@@ -531,7 +531,12 @@ impl StmtVisitor for Interpreter {
                 _ => return self.visitor_runtime_error(None, "Expected a condition."),
             };
             if self.is_truthy(&condition) {
-                self.execute(&stmt.body);
+                match self.execute(&stmt.body) {
+                    VisitorTypes::Return(v) => {
+                        return VisitorTypes::Return(v);
+                    }
+                    _ => {}
+                }
             } else {
                 condition_valid = false;
             }
