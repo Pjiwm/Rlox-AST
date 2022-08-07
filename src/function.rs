@@ -5,6 +5,7 @@ use crate::{
     token::{DataType, Token},
 };
 use std::{
+    cell::RefCell,
     fmt::{self, Debug, Display, Formatter},
     rc::Rc,
 };
@@ -19,21 +20,23 @@ pub struct LoxFunction {
     pub body: Rc<Vec<Rc<dyn Stmt>>>,
     pub params: Rc<Vec<Token>>,
     name: Box<Token>,
+    closure: Rc<RefCell<Environment>>,
 }
 
 impl LoxFunction {
-    pub fn new(declaration: &Function) -> LoxFunction {
+    pub fn new(declaration: &Function, closure: &Rc<RefCell<Environment>>) -> LoxFunction {
         LoxFunction {
             body: Rc::clone(&declaration.body),
             params: Rc::clone(&declaration.params),
             name: Box::new(declaration.name.dup()),
+            closure: Rc::clone(closure),
         }
     }
 }
 
 impl LoxCallable for LoxFunction {
     fn call(&self, interpreter: &mut Interpreter, arguments: Vec<DataType>) -> DataType {
-        let mut environment = Environment::new_enclosing(Rc::clone(&interpreter.globals));
+        let mut environment = Environment::new_enclosing(Rc::clone(&self.closure));
         for (i, token) in self.params.iter().enumerate() {
             let value = match arguments.get(i) {
                 Some(d) => d.clone(),
