@@ -1,7 +1,8 @@
-use std::{env, io, process, str, rc::Rc};
+use std::{env, io, process, rc::Rc, str};
 
 use ast::{Binary, Grouping, Literal, Unary};
 
+use colored::Colorize;
 use token::{DataType, Token, TokenType};
 
 use crate::interpreter::Interpreter;
@@ -9,13 +10,13 @@ mod ast;
 mod ast_printer;
 mod environment;
 mod error;
-mod interpreter;
 mod function;
+mod interpreter;
+mod native_functions;
 mod parser;
 mod repl;
 mod scanner;
 mod token;
-mod native_functions;
 #[macro_use]
 extern crate lazy_static;
 
@@ -26,7 +27,7 @@ fn main() {
         process::exit(64);
     } else if args.len() == 2 {
         run_file(args[1].as_str()).unwrap();
-        println!("SRC: {:?}", args[1].as_str());
+        println!("{}", format!("{} {}", "SRC:".yellow(), args[1].green()));
     } else {
         run_prompt().unwrap();
     }

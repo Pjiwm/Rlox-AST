@@ -33,7 +33,11 @@ pub fn parse_error(token: &Token, message: &str) {
 }
 
 fn report(line: u32, message: &str) {
-    println!("{}", format!("Error at line {line}: {message}").red());
+    if line == 0 {
+        println!("{}", format!("Error: {message}").red());
+    } else {
+        println!("{}", format!("Error at line {line}: {message}").red());
+    }
     set_error(true);
 }
 
