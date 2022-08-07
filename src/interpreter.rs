@@ -115,6 +115,11 @@ impl Interpreter {
         }
     }
 
+    
+    pub fn resolve(&self, expr: Rc<dyn Expr>, depth: usize) {
+        todo!();
+    }
+
     fn repl_printer(&self, expr: &VisitorTypes) {
         match expr {
             VisitorTypes::DataType(d) => {

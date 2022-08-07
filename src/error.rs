@@ -3,6 +3,7 @@ use colored::*;
 
 static mut HAD_ERROR: bool = false;
 static mut HAD_RUNTIME_ERROR: bool = false;
+static mut HAD_RESOLVE_ERROR: bool = false;
 
 pub fn error(line: u32, message: &str) {
     report(line, message);
@@ -30,6 +31,14 @@ pub fn runtime_error(token: &Option<Token>, message: &str) {
 pub fn parse_error(token: &Token, message: &str) {
     let message = format!("[Parse error] {}", message.to_owned());
     token_error(token, message.as_str());
+}
+
+pub fn resolve_error(token: &Token, message: &str) {
+    let message = format!("[Resolve error] {}", message.to_owned());
+    token_error(token, message.as_str());
+    unsafe {
+        HAD_RESOLVE_ERROR = true;
+    }
 }
 
 fn report(line: u32, message: &str) {

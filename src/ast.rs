@@ -264,6 +264,7 @@ impl Variable {
         Self { name }
     }
 }
+
 impl Expr for Variable {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes {
         visitor.visit_variable_expr(self)

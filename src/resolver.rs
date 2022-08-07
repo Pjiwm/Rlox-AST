@@ -1,19 +1,75 @@
+use std::{
+    borrow::{Borrow, BorrowMut},
+    cell::RefCell,
+    collections::HashMap,
+    rc::Rc,
+};
+
 use crate::{
     ast::{
-        Assign, Binary, Block, Call, Class, ExprVisitor, Expression, Function, Get, Grouping, If,
-        Literal, Logical, Print, Return, Set, StmtVisitor, Super, This, Unary, Var, Variable,
-        VisitorTypes, While,
+        Assign, Binary, Block, Call, Class, Expr, ExprVisitor, Expression, Function, Get, Grouping,
+        If, Literal, Logical, Print, Return, Set, Stmt, StmtVisitor, Super, This, Unary, Var,
+        Variable, VisitorTypes, While,
     },
+    error,
     interpreter::Interpreter,
+    token::Token,
 };
 
 pub struct Resolver<'a> {
     interpreter: &'a Interpreter,
+    scopes: RefCell<Vec<RefCell<HashMap<String, bool>>>>,
 }
 
 impl<'a> Resolver<'a> {
     pub fn new(interpreter: &'a Interpreter) -> Resolver {
-        Resolver { interpreter }
+        Resolver {
+            interpreter,
+            scopes: RefCell::new(Vec::new()),
+        }
+    }
+
+    fn resolve(&mut self, statements: &Rc<Vec<Rc<dyn Stmt>>>) {
+        for stmt in statements.iter() {
+            self.resolve_stmt(stmt);
+        }
+    }
+
+    fn resolve_stmt(&mut self, stmt: &Rc<dyn Stmt>) {
+        stmt.accept(self);
+    }
+
+    fn resolve_expr(&mut self, expr: &Rc<dyn Expr>) {
+        expr.accept(self);
+    }
+
+    fn begin_scope(&mut self) {
+        self.scopes.borrow_mut().push(RefCell::new(HashMap::new()));
+    }
+
+    fn end_scope(&mut self) {
+        self.scopes.borrow_mut().pop();
+    }
+
+    fn declare(&mut self, name: Token) {
+        if let Some(scope) = self.scopes.borrow().last() {
+            scope.borrow_mut().insert(name.lexeme, false);
+        }
+    }
+
+    fn define(&mut self, name: Token) {
+        if let Some(scope) = self.scopes.borrow().last() {
+            scope.borrow_mut().insert(name.lexeme, true);
+        }
+    }
+
+    fn resolve_local(&mut self, expr: Rc<dyn Expr>, name: &Token) {
+        for (scope, map) in self.scopes.borrow().iter().rev().enumerate() {
+            if map.borrow().contains_key(&name.lexeme) {
+                self.interpreter.resolve(expr, scope);
+                return;
+            }
+        }
     }
 }
 
@@ -63,13 +119,33 @@ impl<'a> ExprVisitor for Resolver<'a> {
     }
 
     fn visit_variable_expr(&mut self, expr: &Variable) -> VisitorTypes {
-        todo!()
+        let token = expr.name.dup();
+        if !self.scopes.borrow().is_empty()
+            && self
+                .scopes
+                .borrow()
+                .last()
+                .unwrap()
+                .borrow()
+                .get(&token.dup().lexeme)
+                == Some(&false)
+        {
+            error::resolve_error(&token, "Can't read local variable in its own initializer.");
+        } else {
+            let expr = expr;
+            // TODO: Get it back to dyn somehow?
+            self.resolve_local(Rc::clone(expr), &token);
+        }
+        VisitorTypes::Void(())
     }
 }
 
 impl<'a> StmtVisitor for Resolver<'a> {
     fn visit_block_stmt(&mut self, stmt: &Block) -> VisitorTypes {
-        todo!()
+        self.begin_scope();
+        self.resolve(&stmt.statements);
+        self.end_scope();
+        VisitorTypes::Void(())
     }
 
     fn visit_class_stmt(&mut self, stmt: &Class) -> VisitorTypes {
@@ -97,7 +173,12 @@ impl<'a> StmtVisitor for Resolver<'a> {
     }
 
     fn visit_var_stmt(&mut self, stmt: &Var) -> VisitorTypes {
-        todo!()
+        self.declare(stmt.name.dup());
+        if let Some(initializer) = &stmt.initializer {
+            self.resolve_expr(initializer);
+        }
+        self.define(stmt.name.dup());
+        VisitorTypes::Void(())
     }
 
     fn visit_while_stmt(&mut self, stmt: &While) -> VisitorTypes {
