@@ -43,20 +43,16 @@ impl Interpreter {
             self.execute(&stmt);
         }
     }
-
     pub fn execute_block(
         &mut self,
         statements: &Rc<Vec<Rc<dyn Stmt>>>,
         environment: Environment,
     ) -> VisitorTypes {
-        // TODO fix stack overflow here
         let previous = self.environment.replace(Rc::new(RefCell::new(environment)));
         for stmt in statements.iter() {
-            print!("statements-");
-            match self.execute(&stmt) {
+            match self.execute(&stmt.clone()) {
                 VisitorTypes::Return(r) => {
                     self.environment.replace(previous);
-                    println!("Found return value: {:?}", r);
                     return VisitorTypes::Return(r);
                 }
                 _ => (),
@@ -432,8 +428,8 @@ impl ExprVisitor for Interpreter {
 impl StmtVisitor for Interpreter {
     fn visit_block_stmt(&mut self, stmt: &Block) -> VisitorTypes {
         let env = Environment::new_enclosing(self.environment.borrow().clone());
-        self.execute_block(&stmt.statements, env);
-        VisitorTypes::Void(())
+        // This might introduce bugs in the future.
+        self.execute_block(&stmt.statements, env)
     }
 
     fn visit_class_stmt(&mut self, stmt: &Class) -> VisitorTypes {
@@ -458,6 +454,7 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_if_stmt(&mut self, stmt: &If) -> VisitorTypes {
+        let mut potential_return: VisitorTypes = VisitorTypes::Void(());
         let condition = match stmt.condition.accept(self) {
             VisitorTypes::DataType(d) => match d {
                 Some(s) => s,
@@ -466,11 +463,12 @@ impl StmtVisitor for Interpreter {
             _ => return self.visitor_runtime_error(None, "Expected a condition."),
         };
         if self.is_truthy(&condition) {
-            self.execute(&stmt.then_branch);
+            potential_return = self.execute(&stmt.then_branch);
         } else if stmt.else_branch.is_some() {
-            self.execute(&stmt.else_branch.as_ref().unwrap());
+            potential_return = self.execute(&stmt.else_branch.as_ref().unwrap());
         }
-        VisitorTypes::Void(())
+        potential_return
+        // VisitorTypes::Void(())
     }
 
     fn visit_print_stmt(&mut self, stmt: &Print) -> VisitorTypes {
@@ -483,18 +481,18 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_return_stmt(&mut self, stmt: &Return) -> VisitorTypes {
-        stmt.accept(self);
         if let Some(value) = stmt.value.clone() {
             match value.accept(self) {
                 VisitorTypes::String(_) => todo!(),
-                VisitorTypes::DataType(d) => return VisitorTypes::Return(d),
+                VisitorTypes::DataType(d) => {
+                    return VisitorTypes::Return(d);
+                }
                 VisitorTypes::RunTimeError { token, msg } => {
                     return self.visitor_runtime_error(token.as_ref(), &msg);
                 }
                 VisitorTypes::Return(_) => todo!(),
                 VisitorTypes::Void(_) => todo!(),
             }
-            // Err(LoxResult::return_value(self.evaluate(value)?))
         } else {
             return VisitorTypes::Return(Some(DataType::Nil));
         }

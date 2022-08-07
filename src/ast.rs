@@ -6,6 +6,7 @@ pub trait Expr {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes;
     fn as_any(&self) -> &dyn Any;
 }
+#[derive(Debug)]
 pub enum VisitorTypes {
     String(String),
     DataType(Option<DataType>),

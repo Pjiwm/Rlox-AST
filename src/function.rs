@@ -16,8 +16,8 @@ pub trait LoxCallable: Debug + Display {
 
 #[derive(Clone)]
 pub struct LoxFunction {
-    body: Rc<Vec<Rc<dyn Stmt>>>,
-    params: Rc<Vec<Token>>,
+    pub body: Rc<Vec<Rc<dyn Stmt>>>,
+    pub params: Rc<Vec<Token>>,
     name: Box<Token>,
 }
 
@@ -43,10 +43,7 @@ impl LoxCallable for LoxFunction {
         }
         let statements = Rc::new(&self.body);
         match interpreter.execute_block(&statements, environment) {
-            VisitorTypes::Return(d) => match d {
-                Some(s) => s,
-                None => DataType::Nil,
-            },
+            VisitorTypes::Return(Some(d)) => d,
             _ => DataType::Nil,
         }
     }
