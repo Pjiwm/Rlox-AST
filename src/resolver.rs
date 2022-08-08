@@ -43,6 +43,25 @@ impl<'a> Resolver<'a> {
         expr.accept(self);
     }
 
+    fn resolve_local(&mut self, expr: Rc<dyn Expr>, name: &Token) {
+        for (scope, map) in self.scopes.borrow().iter().rev().enumerate() {
+            if map.borrow().contains_key(&name.lexeme) {
+                self.interpreter.resolve(expr, scope);
+                return;
+            }
+        }
+    }
+
+    fn resolve_function(&mut self, func: &Function) {
+        self.begin_scope();
+        for param in func.params.iter() {
+            self.declare(param.dup());
+            self.define(param.dup());
+        }
+        self.resolve(&func.body);
+        self.end_scope();
+    }
+
     fn begin_scope(&mut self) {
         self.scopes.borrow_mut().push(RefCell::new(HashMap::new()));
     }
@@ -62,28 +81,29 @@ impl<'a> Resolver<'a> {
             scope.borrow_mut().insert(name.lexeme, true);
         }
     }
-
-    fn resolve_local(&mut self, expr: Rc<dyn Expr>, name: &Token) {
-        for (scope, map) in self.scopes.borrow().iter().rev().enumerate() {
-            if map.borrow().contains_key(&name.lexeme) {
-                self.interpreter.resolve(expr, scope);
-                return;
-            }
-        }
-    }
 }
 
 impl<'a> ExprVisitor for Resolver<'a> {
     fn visit_assign_expr(&mut self, expr: &Assign) -> VisitorTypes {
-        todo!()
+        let name = expr.name.dup();
+        let expr: Rc<dyn Expr> = Rc::new(Assign::new(expr.name.dup(), expr.value.clone()));
+        self.resolve_expr(&expr);
+        self.resolve_local(expr, &name);
+        VisitorTypes::Void(())
     }
 
     fn visit_binary_expr(&mut self, expr: &Binary) -> VisitorTypes {
-        todo!()
+        self.resolve_expr(&expr.left);
+        self.resolve_expr(&expr.right);
+        VisitorTypes::Void(())
     }
 
     fn visit_call_expr(&mut self, expr: &Call) -> VisitorTypes {
-        todo!()
+        self.resolve_expr(&expr.callee);
+        for arg in expr.arguments.iter() {
+            self.resolve_expr(arg);
+        }
+        VisitorTypes::Void(())
     }
 
     fn visit_get_expr(&mut self, expr: &Get) -> VisitorTypes {
@@ -91,15 +111,18 @@ impl<'a> ExprVisitor for Resolver<'a> {
     }
 
     fn visit_grouping_expr(&mut self, expr: &Grouping) -> VisitorTypes {
-        todo!()
+        self.resolve_expr(&expr.expression);
+        VisitorTypes::Void(())
     }
 
-    fn visit_literal_expr(&mut self, expr: &Literal) -> VisitorTypes {
-        todo!()
+    fn visit_literal_expr(&mut self, _: &Literal) -> VisitorTypes {
+        VisitorTypes::Void(())
     }
 
     fn visit_logical_expr(&mut self, expr: &Logical) -> VisitorTypes {
-        todo!()
+        self.resolve_expr(&expr.left);
+        self.resolve_expr(&expr.right);
+        VisitorTypes::Void(())
     }
 
     fn visit_set_expr(&mut self, expr: &Set) -> VisitorTypes {
@@ -115,7 +138,8 @@ impl<'a> ExprVisitor for Resolver<'a> {
     }
 
     fn visit_unary_expr(&mut self, expr: &Unary) -> VisitorTypes {
-        todo!()
+        self.resolve_expr(&expr.right);
+        VisitorTypes::Void(())
     }
 
     fn visit_variable_expr(&mut self, expr: &Variable) -> VisitorTypes {
@@ -153,23 +177,37 @@ impl<'a> StmtVisitor for Resolver<'a> {
     }
 
     fn visit_expression_stmt(&mut self, stmt: &Expression) -> VisitorTypes {
-        todo!()
+        self.resolve_expr(&stmt.expression);
+        VisitorTypes::Void(())
     }
 
     fn visit_function_stmt(&mut self, stmt: &Function) -> VisitorTypes {
-        todo!()
+        let name = stmt.name.dup();
+        self.declare(name.dup());
+        self.define(name);
+        self.resolve_function(stmt);
+        VisitorTypes::Void(())
     }
 
     fn visit_if_stmt(&mut self, stmt: &If) -> VisitorTypes {
-        todo!()
+        self.resolve_expr(&stmt.condition);
+        self.resolve_stmt(&stmt.then_branch);
+        if let Some(else_branch) = &stmt.else_branch {
+            self.resolve_stmt(&else_branch);
+        }
+        VisitorTypes::Void(())
     }
 
     fn visit_print_stmt(&mut self, stmt: &Print) -> VisitorTypes {
-        todo!()
+        self.resolve_expr(&stmt.expression);
+        VisitorTypes::Void(())
     }
 
     fn visit_return_stmt(&mut self, stmt: &Return) -> VisitorTypes {
-        todo!()
+        if let Some(value) = &stmt.value {
+            self.resolve_expr(value);
+        }
+        VisitorTypes::Void(())
     }
 
     fn visit_var_stmt(&mut self, stmt: &Var) -> VisitorTypes {
@@ -182,6 +220,8 @@ impl<'a> StmtVisitor for Resolver<'a> {
     }
 
     fn visit_while_stmt(&mut self, stmt: &While) -> VisitorTypes {
-        todo!()
+        self.resolve_expr(&stmt.condition);
+        self.resolve_stmt(&stmt.body);
+        VisitorTypes::Void(())
     }
 }
