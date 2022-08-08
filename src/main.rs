@@ -81,10 +81,10 @@ fn _demo_ast() {
 fn _binary_expression_multi() -> Binary {
     Binary::new(
         Rc::new(Unary::new(
-            Token::new(TokenType::Minus, "-".to_string(), None, 1),
+            Token::new(TokenType::Minus, "-".to_string(), None, 1, 1),
             Rc::new(Literal::new(Some(DataType::Number(123.0)))),
         )),
-        Token::new(TokenType::Star, "*".to_string(), None, 1),
+        Token::new(TokenType::Star, "*".to_string(), None, 1, 2),
         Rc::new(Grouping::new(Rc::new(Literal::new(Some(
             DataType::Number(45.67),
         ))))),
@@ -94,7 +94,7 @@ fn _binary_expression_multi() -> Binary {
 fn _binary_expression_sum() -> Binary {
     Binary::new(
         Rc::new(Literal::new(Some(DataType::Number(1.0)))),
-        Token::new(TokenType::Plus, "+".to_string(), None, 1),
+        Token::new(TokenType::Plus, "+".to_string(), None, 1, 3),
         Rc::new(Literal::new(Some(DataType::Number(2.0)))),
     )
 }

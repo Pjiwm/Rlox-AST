@@ -87,7 +87,7 @@ impl<'a> ExprVisitor for Resolver<'a> {
     fn visit_assign_expr(&mut self, expr: &Assign) -> VisitorTypes {
         let name = expr.name.dup();
         let value = expr.value.clone();
-        let expr: Rc<dyn Expr> = Rc::new(Assign::new(expr.name.dup(), expr.value.clone()));
+        let expr: Rc<dyn Expr> = Rc::new(Assign::new(expr.name.dup(), value.clone()));
         self.resolve_expr(&value);
         self.resolve_local(expr, &name);
         VisitorTypes::Void(())

@@ -48,7 +48,6 @@ impl Environment {
     }
 
     pub fn get_at(&self, distance: usize, name: &Token) -> VisitorTypes {
-        println!("{}", distance);
         if distance == 0 {
             VisitorTypes::DataType(Some(self.values.get(&name.lexeme).unwrap().clone()))
         } else {

@@ -11,6 +11,7 @@ pub struct Scanner {
     start: usize,
     current: usize,
     line: u32,
+    pos: u32,
 }
 impl Scanner {
     pub fn new(source: String) -> Self {
@@ -20,6 +21,7 @@ impl Scanner {
             start: 0,
             current: 0,
             line: 1,
+            pos: 0,
         }
     }
 
@@ -31,7 +33,7 @@ impl Scanner {
         }
 
         self.tokens
-            .push(Token::new(TokenType::Eof, "".to_string(), None, self.line));
+            .push(Token::new(TokenType::Eof, "".to_string(), None, self.line, self.pos));
         return &self.tokens;
     }
 
@@ -84,7 +86,7 @@ impl Scanner {
             // Ignore whitespace
             ' ' | '\r' | '\t' => (),
             // Indicates a new line, so the line in the struct should advance as well.
-            '\n' => self.line += 1,
+            '\n' => self.new_line(),
             // Default case
             _ => {
                 if self.is_digit(c) {
@@ -116,7 +118,7 @@ impl Scanner {
     fn string(&mut self) {
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
-                self.line += 1;
+                self.new_line();
             }
             self.advance();
         }
@@ -160,7 +162,13 @@ impl Scanner {
     /// Advance the current index by one. And returns the char at the current index.
     fn advance(&mut self) -> char {
         self.current += 1;
+        self.pos += 1;
         self.source.chars().nth(self.current - 1).unwrap()
+    }
+    /// Advances the current line and resets the position.
+    fn new_line(&mut self) {
+        self.line += 1;
+        self.pos = 0;
     }
 
     /// Adds a new token to the tokens vector.
@@ -181,7 +189,7 @@ impl Scanner {
     fn add_token_advanced(&mut self, token_type: TokenType, literal: Option<DataType>) {
         let text = self.source.substring(self.start, self.current).to_string();
         self.tokens
-            .push(Token::new(token_type, text, literal, self.line));
+            .push(Token::new(token_type, text, literal, self.line, self.pos));
     }
 
     /// Checks if the next char is the same as the given char. This is used to check for lexemes of two characters.

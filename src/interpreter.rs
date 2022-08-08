@@ -120,15 +120,16 @@ impl Interpreter {
 
     pub fn resolve(&self, expr: Rc<dyn Expr>, depth: usize) {
         let local = HashedExpr::new(expr.clone());
-        println!("{} {}", depth, local.hash);
         self.locals.borrow_mut().insert(local, depth);
     }
 
     fn lookup_variable(&self, name: &Token, expr: &Rc<dyn Expr>) -> VisitorTypes {
         let local = HashedExpr::new(expr.clone());
         if let Some(distance) = self.locals.borrow().get(&local) {
-            println!("{} {}", distance, local.hash);
-            self.environment.borrow().borrow().get_at(*distance, name)
+            self.environment
+            .borrow()
+            .borrow()
+            .get_at(*distance, name)
         } else {
             self.globals.borrow().get(name)
         }

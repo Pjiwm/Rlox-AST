@@ -128,7 +128,7 @@ impl<'a> Parser<'a> {
         let mut body = self.statement()?;
 
         if let Some(inc) = increment {
-            let vec = Rc::new(vec![body, Rc::new(Expression::new(inc.clone()))]);
+            let vec = Rc::new(vec![body, Rc::new(Expression::new(inc))]);
             body = Rc::new(Block::new(vec));
         }
 

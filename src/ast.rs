@@ -18,20 +18,21 @@ impl HashedExpr {
         // If this solution doesn't work we can hash teh Token?
         let mut hash: String = String::new();
         if let Some(var) = expr.as_any().downcast_ref::<Variable>() {
-            hash.push_str(var.name.lexeme.as_str());
-            hash.push_str("-");
-            hash.push_str(format!("{}", var.name.line).as_str());
-            hash.push_str(format!("{:?}",var.name.literal).as_str());
-
+            hash = stringify(&var.name);
         } else if let Some(ass) = expr.as_any().downcast_ref::<Assign>() {
-            hash.push_str(ass.name.lexeme.as_str());
-            hash.push_str("-");
-            hash.push_str(format!("{}", ass.name.line).as_str());
-            hash.push_str(format!("{:?}",ass.name.literal).as_str());
+            hash = stringify(&ass.name);
         }
         HashedExpr { expr, hash }
     }
 }
+
+pub fn stringify(token: &Token) -> String {
+    format!(
+        "{}-{}-{}-{:?}",
+        token.lexeme, token.line, token.pos, token.literal
+    )
+}
+
 impl Hash for HashedExpr {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.hash.hash(state);
@@ -40,7 +41,6 @@ impl Hash for HashedExpr {
 
 impl PartialEq for HashedExpr {
     fn eq(&self, other: &HashedExpr) -> bool {
-        // println!("eq: {}", self.hash == other.hash);
         self.hash == other.hash
     }
 }

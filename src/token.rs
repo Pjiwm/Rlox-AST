@@ -9,6 +9,7 @@ pub struct Token {
     pub lexeme: String,
     pub literal: Option<DataType>,
     pub line: u32,
+    pub pos: u32,
 }
 impl Token {
     pub fn new(
@@ -16,12 +17,14 @@ impl Token {
         lexeme: String,
         literal: Option<DataType>,
         line: u32,
+        pos: u32
     ) -> Self {
         Token {
             token_type,
             lexeme,
             literal,
             line,
+            pos,
         }
     }
     pub fn dup(&self) -> Token {
@@ -30,6 +33,7 @@ impl Token {
             lexeme: self.lexeme.clone(),
             literal: self.literal.clone(),
             line: self.line,
+            pos: self.pos,
         }
     }
 }
