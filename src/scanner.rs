@@ -32,8 +32,13 @@ impl Scanner {
             self.scan_token();
         }
 
-        self.tokens
-            .push(Token::new(TokenType::Eof, "".to_string(), None, self.line, self.pos));
+        self.tokens.push(Token::new(
+            TokenType::Eof,
+            "".to_string(),
+            None,
+            self.line,
+            self.pos,
+        ));
         return &self.tokens;
     }
 
@@ -94,7 +99,7 @@ impl Scanner {
                 } else if self.is_alpha(c) {
                     self.identifier();
                 } else {
-                    error::error(self.line, "Unexpected character.")
+                    error::error(self.line, self.pos, "Unexpected character.")
                 }
             }
         }
@@ -123,7 +128,7 @@ impl Scanner {
             self.advance();
         }
         if self.is_at_end() {
-            error::error(self.line, "Unterminated string.");
+            error::error(self.line, self.pos, "Unterminated string.");
             return;
         }
         self.advance();
