@@ -132,9 +132,9 @@ impl<'a> ExprVisitor for Resolver<'a> {
         {
             error::resolve_error(&token, "Can't read local variable in its own initializer.");
         } else {
-            let expr = expr;
-            // TODO: Get it back to dyn somehow?
-            self.resolve_local(Rc::clone(expr), &token);
+            // TODO: Check if this causes bugs or not.
+            let expr: Rc<dyn Expr> = Rc::new(Variable::new(expr.name.dup()));
+            self.resolve_local(Rc::clone(&expr), &token);
         }
         VisitorTypes::Void(())
     }
