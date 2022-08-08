@@ -1,16 +1,16 @@
-use crate::{run, error};
+use crate::{error, run};
 use colored::Colorize;
 use dialoguer::{console::style, theme::Theme, History, Input};
-use substring::Substring;
 use std::{collections::VecDeque, process};
-
+use substring::Substring;
+// TODO fix repl -> make its own run functions totally seperate from what is in main.
 pub fn prompt() {
     let mut history = MyHistory::default();
     clear();
     welcome();
     let mut input = String::new();
     loop {
-        if let Ok(cmd) = Input::<String>::with_theme(&MyTheme::new())
+        if let Ok(mut cmd) = Input::<String>::with_theme(&MyTheme::new())
             .history_with(&mut history)
             .interact_text()
         {
@@ -29,6 +29,9 @@ pub fn prompt() {
                 } else if error::get_runtime_error() {
                     input = remove_incorrect_input(&input, &cmd);
                     error::set_runtime_error(false);
+                }
+                if error::get_resolve_error() {
+                    error::set_resolve_error(false);
                 }
             }
         }

@@ -62,10 +62,20 @@ pub fn set_runtime_error(error: bool) {
     }
 }
 
+pub fn set_resolve_error(error: bool) {
+    unsafe {
+        HAD_RESOLVE_ERROR = error;
+    }
+}
+
 pub fn get_error() -> bool {
     unsafe { HAD_ERROR }
 }
 
 pub fn get_runtime_error() -> bool {
     unsafe { HAD_RUNTIME_ERROR }
+}
+
+pub fn get_resolve_error() -> bool {
+    unsafe { HAD_RESOLVE_ERROR }
 }

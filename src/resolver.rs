@@ -19,6 +19,12 @@ use crate::{
 pub struct Resolver<'a> {
     interpreter: &'a Interpreter,
     scopes: RefCell<Vec<RefCell<HashMap<String, bool>>>>,
+    current_function: RefCell<FunctionType>,
+}
+#[derive(PartialEq)]
+enum FunctionType {
+    None,
+    Function,
 }
 
 impl<'a> Resolver<'a> {
@@ -26,6 +32,7 @@ impl<'a> Resolver<'a> {
         Resolver {
             interpreter,
             scopes: RefCell::new(Vec::new()),
+            current_function: RefCell::new(FunctionType::None),
         }
     }
 
@@ -52,14 +59,16 @@ impl<'a> Resolver<'a> {
         }
     }
 
-    fn resolve_function(&mut self, func: &Function) {
+    fn resolve_function(&mut self, stmt: &Function, func_type: FunctionType) {
+        let enclosing_function = self.current_function.replace(func_type);
         self.begin_scope();
-        for param in func.params.iter() {
+        for param in stmt.params.iter() {
             self.declare(param.dup());
             self.define(param.dup());
         }
-        self.resolve(&func.body);
+        self.resolve(&stmt.body);
         self.end_scope();
+        self.current_function.replace(enclosing_function);
     }
 
     fn begin_scope(&mut self) {
@@ -72,6 +81,9 @@ impl<'a> Resolver<'a> {
 
     fn declare(&mut self, name: Token) {
         if let Some(scope) = self.scopes.borrow().last() {
+            if scope.borrow().contains_key(&name.lexeme) {
+                error::resolve_error(&name, "Already a variable with this name in this scope.");
+            }
             scope.borrow_mut().insert(name.lexeme, false);
         }
     }
@@ -186,7 +198,7 @@ impl<'a> StmtVisitor for Resolver<'a> {
         let name = stmt.name.dup();
         self.declare(name.dup());
         self.define(name);
-        self.resolve_function(stmt);
+        self.resolve_function(stmt, FunctionType::Function);
         VisitorTypes::Void(())
     }
 
@@ -205,6 +217,10 @@ impl<'a> StmtVisitor for Resolver<'a> {
     }
 
     fn visit_return_stmt(&mut self, stmt: &Return) -> VisitorTypes {
+        if *self.current_function.borrow() == FunctionType::None {
+            error::resolve_error(&stmt.keyword, "Can't return from top-level code.");
+        }
+
         if let Some(value) = &stmt.value {
             self.resolve_expr(value);
         }

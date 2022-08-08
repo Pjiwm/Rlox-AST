@@ -44,6 +44,9 @@ fn run_file(path: &str) -> io::Result<()> {
     if error::get_runtime_error() {
         process::exit(70);
     }
+    if error::get_resolve_error() {
+        process::exit(71);
+    }
     Ok(())
 }
 
@@ -65,7 +68,11 @@ pub fn run(source: &str, is_repl: bool) -> io::Result<()> {
     };
     let mut interpreter = Interpreter::new(is_repl);
     let mut resolver = Resolver::new(&interpreter);
+
     resolver.resolve(&Rc::new(statements.clone()));
+    if error::get_resolve_error() {
+        return Ok(());
+    }
     interpreter.interpret(statements);
 
     Ok(())
