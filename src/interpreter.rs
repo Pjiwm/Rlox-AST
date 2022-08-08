@@ -1,5 +1,6 @@
 use std::{
     cell::RefCell,
+    collections::HashMap,
     io::{self, Error, ErrorKind},
     rc::Rc,
 };
@@ -17,6 +18,7 @@ use crate::{
 };
 pub struct Interpreter {
     pub globals: Rc<RefCell<Environment>>,
+    locals: RefCell<HashMap<HashedExpr, usize>>,
     environment: RefCell<Rc<RefCell<Environment>>>,
     is_repl: bool,
     is_last_statement: bool,
@@ -31,6 +33,7 @@ impl Interpreter {
 
         Interpreter {
             globals: Rc::clone(&globals),
+            locals: RefCell::new(HashMap::new()),
             environment: RefCell::new(Rc::clone(&globals)),
             is_repl,
             is_last_statement: false,
@@ -115,9 +118,20 @@ impl Interpreter {
         }
     }
 
-    
     pub fn resolve(&self, expr: Rc<dyn Expr>, depth: usize) {
-        todo!();
+        let local = HashedExpr::new(expr.clone());
+        println!("{} {}", depth, local.hash);
+        self.locals.borrow_mut().insert(local, depth);
+    }
+
+    fn lookup_variable(&self, name: &Token, expr: &Rc<dyn Expr>) -> VisitorTypes {
+        let local = HashedExpr::new(expr.clone());
+        if let Some(distance) = self.locals.borrow().get(&local) {
+            println!("{} {}", distance, local.hash);
+            self.environment.borrow().borrow().get_at(*distance, name)
+        } else {
+            self.globals.borrow().get(name)
+        }
     }
 
     fn repl_printer(&self, expr: &VisitorTypes) {
@@ -190,10 +204,23 @@ impl ExprVisitor for Interpreter {
                     Some(d) => d,
                     None => panic!("Interpreter entered an impossible state."),
                 };
-                self.environment
-                    .borrow()
-                    .borrow_mut()
-                    .assign(&expr.name, data_type_value.clone())
+
+                let dyn_expr: Rc<dyn Expr> =
+                    Rc::new(Assign::new(expr.name.dup(), expr.value.clone()));
+                let hashed_expr = HashedExpr::new(dyn_expr);
+
+                if let Some(distance) = self.locals.borrow().get(&hashed_expr) {
+                    self.environment.borrow().borrow_mut().assign_at(
+                        *distance,
+                        &expr.name,
+                        data_type_value.clone(),
+                    );
+                } else {
+                    self.globals
+                        .borrow_mut()
+                        .assign(&expr.name, data_type_value.clone());
+                }
+                VisitorTypes::DataType(Some(data_type_value))
             }
             _ => self.visitor_runtime_error(Some(&expr.name.dup()), "Invalid assignment target."),
         }
@@ -426,7 +453,9 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_variable_expr(&mut self, expr: &Variable) -> VisitorTypes {
-        self.environment.borrow().borrow_mut().get(&expr.name)
+        let name = expr.name.dup();
+        let expr: Rc<dyn Expr> = Rc::new(Variable::new(name.dup()));
+        self.lookup_variable(&name, &expr)
     }
 }
 

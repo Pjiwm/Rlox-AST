@@ -1,11 +1,52 @@
-use std::{any::Any, rc::Rc};
-
 use crate::token::{DataType, Token};
+use std::hash::{Hash, Hasher};
+use std::{any::Any, rc::Rc};
 
 pub trait Expr {
     fn accept(&self, visitor: &mut dyn ExprVisitor) -> VisitorTypes;
     fn as_any(&self) -> &dyn Any;
 }
+
+pub struct HashedExpr {
+    pub expr: Rc<dyn Expr>,
+    pub hash: String,
+}
+
+impl HashedExpr {
+    pub fn new(expr: Rc<dyn Expr>) -> HashedExpr {
+        // So far we only put Assign and Variable in these object (this and super in the future too)
+        // If this solution doesn't work we can hash teh Token?
+        let mut hash: String = String::new();
+        if let Some(var) = expr.as_any().downcast_ref::<Variable>() {
+            hash.push_str(var.name.lexeme.as_str());
+            hash.push_str("-");
+            hash.push_str(format!("{}", var.name.line).as_str());
+            hash.push_str(format!("{:?}",var.name.literal).as_str());
+
+        } else if let Some(ass) = expr.as_any().downcast_ref::<Assign>() {
+            hash.push_str(ass.name.lexeme.as_str());
+            hash.push_str("-");
+            hash.push_str(format!("{}", ass.name.line).as_str());
+            hash.push_str(format!("{:?}",ass.name.literal).as_str());
+        }
+        HashedExpr { expr, hash }
+    }
+}
+impl Hash for HashedExpr {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.hash.hash(state);
+    }
+}
+
+impl PartialEq for HashedExpr {
+    fn eq(&self, other: &HashedExpr) -> bool {
+        // println!("eq: {}", self.hash == other.hash);
+        self.hash == other.hash
+    }
+}
+
+impl std::cmp::Eq for HashedExpr {}
+
 #[derive(Debug)]
 pub enum VisitorTypes {
     String(String),
@@ -311,11 +352,7 @@ pub struct Class {
     pub super_class: Option<Rc<Variable>>,
 }
 impl Class {
-    pub fn new(
-        name: Token,
-        methods: Vec<Rc<Function>>,
-        super_class: Option<Rc<Variable>>,
-    ) -> Self {
+    pub fn new(name: Token, methods: Vec<Rc<Function>>, super_class: Option<Rc<Variable>>) -> Self {
         Self {
             name,
             methods,
@@ -350,7 +387,11 @@ pub struct Function {
 }
 impl Function {
     pub fn new(name: Token, param: Rc<Vec<Token>>, body: Rc<Vec<Rc<dyn Stmt>>>) -> Self {
-        Self { name, params: param, body }
+        Self {
+            name,
+            params: param,
+            body,
+        }
     }
 }
 impl Stmt for Function {

@@ -29,7 +29,7 @@ impl<'a> Resolver<'a> {
         }
     }
 
-    fn resolve(&mut self, statements: &Rc<Vec<Rc<dyn Stmt>>>) {
+    pub fn resolve(&mut self, statements: &Rc<Vec<Rc<dyn Stmt>>>) {
         for stmt in statements.iter() {
             self.resolve_stmt(stmt);
         }
@@ -86,8 +86,9 @@ impl<'a> Resolver<'a> {
 impl<'a> ExprVisitor for Resolver<'a> {
     fn visit_assign_expr(&mut self, expr: &Assign) -> VisitorTypes {
         let name = expr.name.dup();
+        let value = expr.value.clone();
         let expr: Rc<dyn Expr> = Rc::new(Assign::new(expr.name.dup(), expr.value.clone()));
-        self.resolve_expr(&expr);
+        self.resolve_expr(&value);
         self.resolve_local(expr, &name);
         VisitorTypes::Void(())
     }
@@ -220,8 +221,8 @@ impl<'a> StmtVisitor for Resolver<'a> {
     }
 
     fn visit_while_stmt(&mut self, stmt: &While) -> VisitorTypes {
-        self.resolve_expr(&stmt.condition);
-        self.resolve_stmt(&stmt.body);
+        self.resolve_expr(&stmt.condition.clone());
+        self.resolve_stmt(&stmt.body.clone());
         VisitorTypes::Void(())
     }
 }

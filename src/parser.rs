@@ -110,14 +110,14 @@ impl<'a> Parser<'a> {
             Some(self.expression_statement()?)
         };
 
-        let condition = if self.matches(&[TokenType::Semicolon]) {
+        let condition = if self.check(TokenType::Semicolon) {
             None
         } else {
             Some(self.expression()?)
         };
         self.consume(TokenType::Semicolon, "Expect ';' after loop condition.")?;
 
-        let increment = if self.matches(&[TokenType::RightParen]) {
+        let increment = if self.check(TokenType::RightParen) {
             None
         } else {
             Some(self.expression()?)
@@ -127,7 +127,7 @@ impl<'a> Parser<'a> {
         let mut body = self.statement()?;
 
         if let Some(inc) = increment {
-            let vec = Rc::new(vec![body, Rc::new(Expression::new(inc))]);
+            let vec = Rc::new(vec![body, Rc::new(Expression::new(inc.clone()))]);
             body = Rc::new(Block::new(vec));
         }
 

@@ -3,6 +3,7 @@ use std::{env, io, process, rc::Rc, str};
 use ast::{Binary, Grouping, Literal, Unary};
 
 use colored::Colorize;
+use resolver::Resolver;
 use token::{DataType, Token, TokenType};
 
 use crate::interpreter::Interpreter;
@@ -15,9 +16,9 @@ mod interpreter;
 mod native_functions;
 mod parser;
 mod repl;
+mod resolver;
 mod scanner;
 mod token;
-mod resolver;
 #[macro_use]
 extern crate lazy_static;
 
@@ -63,6 +64,8 @@ pub fn run(source: &str, is_repl: bool) -> io::Result<()> {
         }
     };
     let mut interpreter = Interpreter::new(is_repl);
+    let mut resolver = Resolver::new(&interpreter);
+    resolver.resolve(&Rc::new(statements.clone()));
     interpreter.interpret(statements);
 
     Ok(())
