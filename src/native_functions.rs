@@ -1,5 +1,6 @@
 use std::{
     fmt::{self, Display, Formatter},
+    io::{self, Write},
     time::SystemTime,
 };
 
@@ -27,6 +28,32 @@ impl LoxCallable for Clock {
 }
 
 impl Display for Clock {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "<Native-Function {}>", self.name)
+    }
+}
+#[derive(Debug)]
+pub struct Println {
+    name: String,
+}
+impl Println {
+    pub fn new(name: String) -> Println {
+        Println { name }
+    }
+}
+
+impl LoxCallable for Println {
+    fn call(&self, _: &mut Interpreter, arguments: Vec<DataType>) -> DataType {
+        println!("{}", arguments[0].to_string());
+        DataType::Nil
+    }
+
+    fn arity(&self) -> usize {
+        1
+    }
+}
+
+impl Display for Println {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "<Native-Function {}>", self.name)
     }

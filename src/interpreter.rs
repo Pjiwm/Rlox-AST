@@ -13,7 +13,7 @@ use crate::{
     environment::Environment,
     error,
     function::{LoxCallable, LoxFunction, LoxNative},
-    native_functions::Clock,
+    native_functions::{Clock, Println},
     token::{DataType, Token, TokenType},
 };
 pub struct Interpreter {
@@ -26,10 +26,16 @@ pub struct Interpreter {
 impl Interpreter {
     pub fn new(is_repl: bool) -> Interpreter {
         let globals = Rc::new(RefCell::new(Environment::new()));
+
         let clock = DataType::Native(LoxNative {
             function: Rc::new(Clock::new("Clock".to_string())),
         });
         globals.borrow_mut().define("clock".to_string(), clock);
+
+        let println = DataType::Native(LoxNative {
+            function: Rc::new(Println::new("Println".to_string())),
+        });
+        globals.borrow_mut().define("println".to_string(), println);
 
         Interpreter {
             globals: Rc::clone(&globals),
@@ -126,10 +132,7 @@ impl Interpreter {
     fn lookup_variable(&self, name: &Token, expr: &Rc<dyn Expr>) -> VisitorTypes {
         let local = HashedExpr::new(expr.clone());
         if let Some(distance) = self.locals.borrow().get(&local) {
-            self.environment
-            .borrow()
-            .borrow()
-            .get_at(*distance, name)
+            self.environment.borrow().borrow().get_at(*distance, name)
         } else {
             self.globals.borrow().get(name)
         }
@@ -508,7 +511,7 @@ impl StmtVisitor for Interpreter {
     fn visit_print_stmt(&mut self, stmt: &Print) -> VisitorTypes {
         let value = stmt.expression.accept(self);
         match self.stringify(value) {
-            Ok(s) => println!("{}", s),
+            Ok(s) => print!("{}", s),
             Err(_) => {}
         }
         VisitorTypes::Void(())
