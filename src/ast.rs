@@ -14,8 +14,6 @@ pub struct HashedExpr {
 
 impl HashedExpr {
     pub fn new(expr: Rc<dyn Expr>) -> HashedExpr {
-        // So far we only put Assign and Variable in these object (this and super in the future too)
-        // If this solution doesn't work we can hash teh Token?
         let mut hash: String = String::new();
         if let Some(var) = expr.as_any().downcast_ref::<Variable>() {
             hash = stringify(&var.name);

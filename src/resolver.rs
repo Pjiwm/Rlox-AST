@@ -1,9 +1,4 @@
-use std::{
-    borrow::{Borrow, BorrowMut},
-    cell::RefCell,
-    collections::HashMap,
-    rc::Rc,
-};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
     ast::{
@@ -169,7 +164,6 @@ impl<'a> ExprVisitor for Resolver<'a> {
         {
             error::resolve_error(&token, "Can't read local variable in its own initializer.");
         } else {
-            // TODO: Check if this causes bugs or not.
             let expr: Rc<dyn Expr> = Rc::new(Variable::new(expr.name.dup()));
             self.resolve_local(Rc::clone(&expr), &token);
         }

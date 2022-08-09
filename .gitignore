@@ -1,3 +1,4 @@
 /target
 test*.txt
 *.lox
+ast_demo.rs

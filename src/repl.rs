@@ -1,16 +1,16 @@
-use crate::{error, run};
+use crate::run;
 use colored::Colorize;
 use dialoguer::{console::style, theme::Theme, History, Input};
 use std::{collections::VecDeque, process};
 use substring::Substring;
-// TODO fix repl -> make its own run functions totally seperate from what is in main.
+
 pub fn prompt() {
     let mut history = MyHistory::default();
     clear();
     welcome();
     let mut input = String::new();
     loop {
-        if let Ok(mut cmd) = Input::<String>::with_theme(&MyTheme::new())
+        if let Ok(cmd) = Input::<String>::with_theme(&MyTheme::new())
             .history_with(&mut history)
             .interact_text()
         {
@@ -22,16 +22,16 @@ pub fn prompt() {
                 input.clear();
             } else {
                 input.push_str(&cmd);
-                run(&input, true).unwrap();
-                if error::get_error() {
-                    input = remove_incorrect_input(&input, &cmd);
-                    error::set_error(false);
-                } else if error::get_runtime_error() {
-                    input = remove_incorrect_input(&input, &cmd);
-                    error::set_runtime_error(false);
-                }
-                if error::get_resolve_error() {
-                    error::set_resolve_error(false);
+                match run::run(&input, true) {
+                    Ok(_) => {
+                        input = remove_last_cmd(&input, &cmd);
+                        let cmd = remove_print(&cmd);
+                        input.push_str(cmd.as_str());
+                    }
+                    Err(_) => {
+                        input = remove_last_cmd(&input, &cmd);
+                        run::disable_erros();
+                    }
                 }
             }
         }
@@ -65,8 +65,28 @@ fn welcome() {
     format!("================================================================================================").yellow(),);
 }
 
-fn remove_incorrect_input(input: &String, cmd: &str) -> String {
+fn remove_last_cmd(input: &String, cmd: &str) -> String {
     input.substring(0, input.len() - cmd.len()).to_string()
+}
+
+fn remove_print(cmd: &str) -> String {
+    let mut buffer = String::new();
+    let mut in_print = false;
+    for i in 0..cmd.len() {
+        let current = cmd.substring(i, cmd.len() - 1);
+        if current.starts_with("print") {
+            in_print = true;
+        }
+
+        if !in_print {
+            buffer.push(cmd.chars().nth(i).unwrap());
+        }
+
+        if current.starts_with(";") {
+            in_print = false;
+        }
+    }
+    buffer
 }
 
 struct MyHistory {

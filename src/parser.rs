@@ -101,7 +101,6 @@ impl<'a> Parser<'a> {
     /// The reason why While objects are created and not a 'For' object is because they contain almost
     /// the same logic.
     fn for_statement(&mut self) -> Result<Rc<dyn Stmt>, Error> {
-        // TODO Fix for loops.
         self.consume(TokenType::LeftParen, "Expect '(' after 'for'.")?;
         let initializer = if self.matches(&[TokenType::Semicolon]) {
             None

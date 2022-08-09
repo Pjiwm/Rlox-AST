@@ -503,7 +503,6 @@ impl StmtVisitor for Interpreter {
             potential_return = self.execute(&stmt.else_branch.as_ref().unwrap());
         }
         potential_return
-        // VisitorTypes::Void(())
     }
 
     fn visit_print_stmt(&mut self, stmt: &Print) -> VisitorTypes {
