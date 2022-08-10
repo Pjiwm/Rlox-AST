@@ -101,7 +101,10 @@ impl Interpreter {
                 string.to_owned()
             }
             Some(DataType::Nil) => "nil".to_string(),
-            Some(_) => "Function".to_string(),
+            Some(DataType::Function(f)) => format!("{f}"),
+            Some(DataType::Native(n)) => format!("{n}"),
+            Some(DataType::Class(c)) => format!("{c}"),
+            Some(DataType::Instance(i)) => format!("{i}"),
             None => "nil".to_string(),
         };
         result
@@ -171,6 +174,7 @@ impl Interpreter {
                 .bright_red()
                 .to_string(),
             Some(DataType::Class(c)) => format!("{}", c).on_white().bright_purple().to_string(),
+            Some(DataType::Instance(i)) => format!("{}", i).on_white().bright_purple().to_string(),
             None => "nil".red().to_string(),
         };
         result
@@ -355,6 +359,7 @@ impl ExprVisitor for Interpreter {
             function = match c {
                 DataType::Function(f) => Rc::new(f),
                 DataType::Native(n) => n.function,
+                DataType::Class(c) => Rc::new(c),
                 _ => {
                     return self.visitor_runtime_error(
                         Some(&token),

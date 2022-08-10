@@ -3,7 +3,7 @@ use std::fmt::format;
 use strum_macros::Display;
 
 use crate::{
-    class::LoxClass,
+    class::{LoxClass, LoxInstance},
     function::{LoxFunction, LoxNative},
 };
 
@@ -97,6 +97,7 @@ pub enum DataType {
     Function(LoxFunction),
     Native(LoxNative),
     Class(LoxClass),
+    Instance(LoxInstance),
 }
 impl DataType {
     pub fn to_string(&self) -> String {
@@ -108,6 +109,7 @@ impl DataType {
             DataType::Function(f) => format!("{f}"),
             DataType::Native(n) => format!("{n}"),
             DataType::Class(c) => format!("{c}"),
+            DataType::Instance(i) => format!("{i}"),
         }
     }
 }
