@@ -10,6 +10,7 @@ use substring::Substring;
 
 use crate::{
     ast::*,
+    class::LoxClass,
     environment::Environment,
     error,
     function::{LoxCallable, LoxFunction, LoxNative},
@@ -167,8 +168,9 @@ impl Interpreter {
             Some(DataType::Native(n)) => format!("{}", n.function)
                 .on_white()
                 .black()
-                .bold()
+                .bright_red()
                 .to_string(),
+            Some(DataType::Class(c)) => format!("{}", c).on_white().bright_purple().to_string(),
             None => "nil".red().to_string(),
         };
         result
@@ -471,7 +473,16 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_class_stmt(&mut self, stmt: &Class) -> VisitorTypes {
-        todo!()
+        self.environment
+            .borrow()
+            .borrow_mut()
+            .define(stmt.name.dup().lexeme, DataType::Nil);
+        let class = LoxClass::new(stmt.name.dup().lexeme);
+        self.environment
+            .borrow()
+            .borrow_mut()
+            .assign(&stmt.name, DataType::Class(class));
+        VisitorTypes::Void(())
     }
 
     fn visit_expression_stmt(&mut self, stmt: &Expression) -> VisitorTypes {

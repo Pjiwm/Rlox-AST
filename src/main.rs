@@ -2,6 +2,7 @@ use std::{env, process};
 
 mod ast;
 mod ast_printer;
+mod class;
 mod environment;
 mod error;
 mod function;

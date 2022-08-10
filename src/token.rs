@@ -1,7 +1,11 @@
 use core::fmt::Debug;
+use std::fmt::format;
 use strum_macros::Display;
 
-use crate::function::{LoxFunction, LoxNative};
+use crate::{
+    class::LoxClass,
+    function::{LoxFunction, LoxNative},
+};
 
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -17,7 +21,7 @@ impl Token {
         lexeme: String,
         literal: Option<DataType>,
         line: u32,
-        pos: u32
+        pos: u32,
     ) -> Self {
         Token {
             token_type,
@@ -91,7 +95,8 @@ pub enum DataType {
     Bool(bool),
     Nil,
     Function(LoxFunction),
-    Native(LoxNative)
+    Native(LoxNative),
+    Class(LoxClass),
 }
 impl DataType {
     pub fn to_string(&self) -> String {
@@ -100,8 +105,9 @@ impl DataType {
             DataType::Number(n) => n.to_string(),
             DataType::Bool(b) => b.to_string(),
             DataType::Nil => "nil".to_string(),
-            DataType::Function(_) => "Function".to_string(),
-            DataType::Native(_) => "Native".to_string(),
+            DataType::Function(f) => format!("{f}"),
+            DataType::Native(n) => format!("{n}"),
+            DataType::Class(c) => format!("{c}"),
         }
     }
 }

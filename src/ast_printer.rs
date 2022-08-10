@@ -78,6 +78,7 @@ impl ExprVisitor for AstPrinter {
                 DataType::Nil => VisitorTypes::String("Nil".to_string()),
                 DataType::Function(_) => VisitorTypes::String("Function".to_string()),
                 DataType::Native(_) => VisitorTypes::String("Native".to_string()),
+                DataType::Class(_) => VisitorTypes::String("Class".to_string()),
             }
         }
     }

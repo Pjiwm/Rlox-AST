@@ -75,3 +75,8 @@ impl Debug for LoxFunction {
 pub struct LoxNative {
     pub function: Rc<dyn LoxCallable>,
 }
+impl fmt::Display for LoxNative {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}", self.function)
+    }
+}

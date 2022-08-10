@@ -5,8 +5,8 @@ use std::{
 
 use crate::{
     ast::{
-        Assign, Binary, Block, Call, Expr, Expression, Function, Grouping, If, Literal, Logical,
-        Print, Return, Stmt, Unary, Var, Variable, While,
+        Assign, Binary, Block, Call, Class, Expr, Expression, Function, Grouping, If, Literal,
+        Logical, Print, Return, Stmt, Unary, Var, Variable, While,
     },
     error::{self, parse_error},
     token::{DataType, Token, TokenType},
@@ -33,13 +33,14 @@ impl<'a> Parser<'a> {
     fn expression(&mut self) -> Result<Rc<dyn Expr>, Error> {
         self.assignment()
     }
-    /// Returns a statement that's either a function- var declaration or any other statement
-    /// which the statment function can return.
-    /// It matches if the current token is a function (fun), if it is it will return a function declaration.
-    /// If not it checks if it's a var declaration.
-    /// Otherwise it will return a statement by calling the statement function.
+    /// Returns a statement that's either a class, function or var declaration or any other statement
+    /// which the statement function can return.
+    /// It matches if the current token is class then if it's a function then if it's a var
+    /// or else it's a regular statement.
     fn declaration(&mut self) -> Result<Rc<dyn Stmt>, Error> {
-        if self.matches(&[TokenType::Fun]) {
+        if self.matches(&[TokenType::Class]) {
+            return self.class_declaration();
+        } else if self.matches(&[TokenType::Fun]) {
             return self.function("function");
         } else if self.matches(&[TokenType::Var]) {
             return self.var_declaration();
@@ -52,6 +53,18 @@ impl<'a> Parser<'a> {
             }
         }
     }
+    /// TODO describe
+    fn class_declaration(&mut self) -> Result<Rc<dyn Stmt>, Error> {
+        let name = self.consume(TokenType::Identifier, "Expect class name")?;
+        self.consume(TokenType::LeftBrace, "Expect '{' before class body")?;
+        let mut methods = Vec::new();
+        while !self.check(TokenType::RightBrace) {
+            methods.push(self.function("method")?);
+        }
+        self.consume(TokenType::RightBrace, "Expect '}' after class body")?;
+        Ok(Rc::new(Class::new(name, methods)))
+    }
+
     /// Checks what type of statement we are dealing with and calls the corresponding function that statement.
     /// This is done by checking the current token type.
     /// This means that because the Token type and therefor the statement type

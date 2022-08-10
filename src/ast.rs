@@ -342,19 +342,20 @@ impl Stmt for Block {
         visitor.visit_block_stmt(self)
     }
 }
-
+// TODO super classes will be added later, commenting out super class code for now.
 pub struct Class {
     pub name: Token,
     // Check if these works, cause they might not...
-    pub methods: Vec<Rc<Function>>,
-    pub super_class: Option<Rc<Variable>>,
+    pub methods: Vec<Rc<dyn Stmt>>,
+    // pub super_class: Option<Rc<Variable>>,
 }
 impl Class {
-    pub fn new(name: Token, methods: Vec<Rc<Function>>, super_class: Option<Rc<Variable>>) -> Self {
+    // super_class: Option<Rc<Variable>>
+    pub fn new(name: Token, methods: Vec<Rc<dyn Stmt>>) -> Self {
         Self {
             name,
             methods,
-            super_class,
+            // super_class,
         }
     }
 }

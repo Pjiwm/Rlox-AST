@@ -180,7 +180,9 @@ impl<'a> StmtVisitor for Resolver<'a> {
     }
 
     fn visit_class_stmt(&mut self, stmt: &Class) -> VisitorTypes {
-        todo!()
+        self.declare(stmt.name.dup());
+        self.define(stmt.name.dup());
+        VisitorTypes::Void(())
     }
 
     fn visit_expression_stmt(&mut self, stmt: &Expression) -> VisitorTypes {
