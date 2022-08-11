@@ -6,7 +6,7 @@ use std::{
 use crate::{
     ast::{
         Assign, Binary, Block, Call, Class, Expr, Expression, Function, Get, Grouping, If, Literal,
-        Logical, Print, Return, Stmt, Unary, Var, Variable, While,
+        Logical, Print, Return, Set, Stmt, Unary, Var, Variable, While,
     },
     error::{self, parse_error},
     token::{DataType, Token, TokenType},
@@ -304,10 +304,13 @@ impl<'a> Parser<'a> {
         self.consume(TokenType::RightBrace, "Expect '}' after block.")?;
         Ok(Rc::new(statements))
     }
-    /// Assigns a value to a variable. If the epxression is not of type 'Variable', it will return the expression.
+    /// Assigns a value to a variable or field.
     /// If the expression is of type 'Variable', it will assign the value to the variable.
-    /// Because the value is one position furhter than the parser has advanced via recursion the next expression can be grabbed.
+    /// Because the value is one position furhter than the parser has advanced via recursion the next expression
+    /// can be grabbed.
     /// A new Assignment object is returned with the variable's name and the value we got via recursion.
+    /// If the expression is of type 'Get', it will assign the value to the field instead.
+    /// If the epxression is not of type 'Variable' or 'Get' (get = accessing field), it will return the expression.
     fn assignment(&mut self) -> Result<Rc<dyn Expr>, Error> {
         let expr = self.or()?;
         if self.matches(&[TokenType::Equal]) {
@@ -316,8 +319,15 @@ impl<'a> Parser<'a> {
             let value = self.assignment()?;
             match expr.as_any().downcast_ref::<Variable>() {
                 Some(v) => return Ok(Rc::new(Assign::new(v.name.dup(), value))),
-                None => return Err(self.parse_error(&equals, "Invalid assignment target.")),
+                None => {}
             }
+            match expr.as_any().downcast_ref::<Get>() {
+                Some(get) => {
+                    return Ok(Rc::new(Set::new(get.object.clone(), get.name.dup(), value)))
+                }
+                None => {}
+            }
+            return Err(self.parse_error(&equals, "Invalid assignment target."));
         }
         Ok(expr)
     }

@@ -19,7 +19,7 @@ impl LoxClass {
 }
 
 impl LoxCallable for LoxClass {
-    fn call(&self, interpreter: &mut Interpreter, arguments: Vec<DataType>) -> DataType {
+    fn call(&self, _: &mut Interpreter, _: Vec<DataType>) -> DataType {
         let instance = LoxInstance::new(self.clone());
         DataType::Instance(instance)
     }
