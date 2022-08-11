@@ -1,5 +1,11 @@
 use core::fmt;
-use std::{cell::RefCell, collections::HashMap, fmt::Formatter};
+use std::{
+    borrow::{Borrow, BorrowMut},
+    cell::RefCell,
+    collections::HashMap,
+    fmt::Formatter,
+    rc::Rc,
+};
 
 use crate::{
     ast::VisitorTypes,
@@ -21,7 +27,7 @@ impl LoxClass {
 impl LoxCallable for LoxClass {
     fn call(&self, _: &mut Interpreter, _: Vec<DataType>) -> DataType {
         let instance = LoxInstance::new(self.clone());
-        DataType::Instance(instance)
+        DataType::Instance(Rc::new(instance))
     }
 
     fn arity(&self) -> usize {
@@ -50,7 +56,7 @@ impl LoxInstance {
     }
     pub fn get(&self, token: &Token) -> VisitorTypes {
         if self.fields.borrow().contains_key(&token.lexeme) {
-            return VisitorTypes::Return(Some(
+            return VisitorTypes::DataType(Some(
                 self.fields.borrow().get(&token.lexeme).unwrap().clone(),
             ));
         }
@@ -58,6 +64,12 @@ impl LoxInstance {
             token: Some(token.dup()),
             msg: format!("Undefined property '{}'.", token.lexeme),
         }
+    }
+
+    pub fn set(&self, token: &Token, value: Option<DataType>) {
+        self.fields
+            .borrow_mut()
+            .insert(token.dup().lexeme, value.unwrap_or(DataType::Nil));
     }
 }
 

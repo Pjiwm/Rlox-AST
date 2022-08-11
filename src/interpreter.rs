@@ -348,7 +348,11 @@ impl ExprVisitor for Interpreter {
         for expr in &expr.arguments {
             let data_type = match expr.accept(self) {
                 VisitorTypes::DataType(s) => s,
-                _ => panic!("Interpreter entered impossible state."),
+                VisitorTypes::String(_) => todo!(),
+                VisitorTypes::RunTimeError { token, msg } => todo!(),
+                VisitorTypes::Return(_) => todo!(),
+                VisitorTypes::Void(_) => todo!(),
+                // _ => panic!("Interpreter entered impossible state."),
             };
             if let Some(d) = data_type {
                 arguments.push(d);
@@ -384,17 +388,16 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_get_expr(&mut self, expr: &Get) -> VisitorTypes {
-        let err =
-            self.visitor_runtime_error(Some(&expr.name.dup()), "Only instances have properties.");
+        let err_msg = "Only instances have properties.";
         let object = match expr.object.accept(self) {
             VisitorTypes::DataType(d) => d,
-            _ => return err,
+            _ => return self.visitor_runtime_error(Some(&expr.name.dup()), err_msg),
         };
         let res = match object {
             Some(DataType::Instance(instance)) => instance.get(&expr.name),
-            _ => return err,
+            _ => return self.visitor_runtime_error(Some(&expr.name.dup()), err_msg),
         };
-        
+
         match res {
             VisitorTypes::RunTimeError { token, msg } => {
                 return self.visitor_runtime_error(token.as_ref(), &msg);
@@ -443,7 +446,23 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_set_expr(&mut self, expr: &Set) -> VisitorTypes {
-        todo!()
+        let err_msg = "Only instances have fields.";
+        let object = match expr.object.accept(self) {
+            VisitorTypes::DataType(d) => d,
+            _ => return self.visitor_runtime_error(Some(&expr.name.dup()), err_msg),
+        };
+        let value = match expr.value.accept(self) {
+            VisitorTypes::DataType(d) => d,
+            _ => return self.visitor_runtime_error(Some(&expr.name.dup()), err_msg),
+        };
+        match object {
+            Some(DataType::Instance(instance)) => {
+                instance.set(&expr.name, value.clone());
+                ()
+            }
+            _ => return self.visitor_runtime_error(Some(&expr.name.dup()), err_msg),
+        }
+        VisitorTypes::DataType(value)
     }
 
     fn visit_super_expr(&mut self, expr: &Super) -> VisitorTypes {

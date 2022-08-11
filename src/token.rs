@@ -1,5 +1,5 @@
 use core::fmt::Debug;
-use std::fmt::format;
+use std::{fmt::format, rc::Rc};
 use strum_macros::Display;
 
 use crate::{
@@ -97,7 +97,7 @@ pub enum DataType {
     Function(LoxFunction),
     Native(LoxNative),
     Class(LoxClass),
-    Instance(LoxInstance),
+    Instance(Rc<LoxInstance>),
 }
 impl DataType {
     pub fn to_string(&self) -> String {

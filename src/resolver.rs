@@ -135,7 +135,9 @@ impl<'a> ExprVisitor for Resolver<'a> {
     }
 
     fn visit_set_expr(&mut self, expr: &Set) -> VisitorTypes {
-        todo!()
+        self.resolve_expr(&expr.value);
+        self.resolve_expr(&expr.object);
+        VisitorTypes::Void(())
     }
 
     fn visit_super_expr(&mut self, expr: &Super) -> VisitorTypes {
