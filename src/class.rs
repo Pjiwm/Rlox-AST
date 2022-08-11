@@ -1,7 +1,12 @@
 use core::fmt;
-use std::fmt::Formatter;
+use std::{cell::RefCell, collections::HashMap, fmt::Formatter};
 
-use crate::{function::LoxCallable, interpreter::Interpreter, token::DataType};
+use crate::{
+    ast::VisitorTypes,
+    function::LoxCallable,
+    interpreter::Interpreter,
+    token::{DataType, Token},
+};
 
 #[derive(Debug, Clone)]
 pub struct LoxClass {
@@ -33,11 +38,26 @@ impl fmt::Display for LoxClass {
 #[derive(Debug, Clone)]
 pub struct LoxInstance {
     class: LoxClass,
+    fields: RefCell<HashMap<String, DataType>>,
 }
 
 impl LoxInstance {
     pub fn new(class: LoxClass) -> LoxInstance {
-        LoxInstance { class }
+        LoxInstance {
+            class,
+            fields: RefCell::new(HashMap::new()),
+        }
+    }
+    pub fn get(&self, token: &Token) -> VisitorTypes {
+        if self.fields.borrow().contains_key(&token.lexeme) {
+            return VisitorTypes::Return(Some(
+                self.fields.borrow().get(&token.lexeme).unwrap().clone(),
+            ));
+        }
+        VisitorTypes::RunTimeError {
+            token: Some(token.dup()),
+            msg: format!("Undefined property '{}'.", token.lexeme),
+        }
     }
 }
 

@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     ast::{
-        Assign, Binary, Block, Call, Class, Expr, Expression, Function, Grouping, If, Literal,
+        Assign, Binary, Block, Call, Class, Expr, Expression, Function, Get, Grouping, If, Literal,
         Logical, Print, Return, Stmt, Unary, Var, Variable, While,
     },
     error::{self, parse_error},
@@ -459,16 +459,25 @@ impl<'a> Parser<'a> {
         Ok(Rc::new(Call::new(callee, paren, arguments)))
     }
     /// grabs an expression containing a datatype from primary.
-    /// The parser advances and it loops unril the current token in the parser isn't a left paranthesis.
-    /// While this is true the value of expr is replaced with the returned value from the finish call method, which is used to parse
-    /// a functions argument list. That function takes in the callee as its parameter which is the old value of the expression, grabbed from
+    /// The parser advances and it loops until the current token in the parser isn't a left paranthesis or period.
+    /// While the current token is a left parent,
+    /// the value of expr is replaced with the returned value from the finish call method,
+    /// which is used to parse a functions argument list. That function takes in the callee as its parameter,
+    /// which is the old value of the expression, grabbed from
     /// the primary function.
-    /// Whe the loop is done the new expression is returned.
+    /// If the current token is a period a property of an object is being accessed.
+    /// The parser consumes by checking if the next token is an identifier and uses the result
+    /// to create a get object which handles property access.
+    /// When the loop is done the new expression is returned.
     fn call(&mut self) -> Result<Rc<dyn Expr>, Error> {
         let mut expr = self.primary();
         loop {
             if self.matches(&[TokenType::LeftParen]) {
                 expr = self.finish_call(expr?);
+            } else if self.matches(&[TokenType::Dot]) {
+                let name =
+                    self.consume(TokenType::Identifier, "Expect property name after '.'.")?;
+                expr = Ok(Rc::new(Get::new(expr?, name.clone())));
             } else {
                 break;
             }

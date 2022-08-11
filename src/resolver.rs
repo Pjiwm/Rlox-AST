@@ -115,7 +115,8 @@ impl<'a> ExprVisitor for Resolver<'a> {
     }
 
     fn visit_get_expr(&mut self, expr: &Get) -> VisitorTypes {
-        todo!()
+        self.resolve_expr(&expr.object);
+        VisitorTypes::Void(())
     }
 
     fn visit_grouping_expr(&mut self, expr: &Grouping) -> VisitorTypes {

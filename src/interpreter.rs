@@ -384,7 +384,24 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_get_expr(&mut self, expr: &Get) -> VisitorTypes {
-        todo!()
+        let err =
+            self.visitor_runtime_error(Some(&expr.name.dup()), "Only instances have properties.");
+        let object = match expr.object.accept(self) {
+            VisitorTypes::DataType(d) => d,
+            _ => return err,
+        };
+        let res = match object {
+            Some(DataType::Instance(instance)) => instance.get(&expr.name),
+            _ => return err,
+        };
+        
+        match res {
+            VisitorTypes::RunTimeError { token, msg } => {
+                return self.visitor_runtime_error(token.as_ref(), &msg);
+            }
+            _ => (),
+        }
+        res
     }
 
     fn visit_grouping_expr(&mut self, expr: &Grouping) -> VisitorTypes {
