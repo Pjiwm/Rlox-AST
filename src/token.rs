@@ -1,5 +1,5 @@
 use core::fmt::Debug;
-use std::{fmt::format, rc::Rc};
+use std::rc::Rc;
 use strum_macros::Display;
 
 use crate::{

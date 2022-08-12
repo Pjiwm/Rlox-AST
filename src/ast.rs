@@ -316,6 +316,7 @@ impl Expr for Variable {
 
 pub trait Stmt {
     fn accept(&self, visitor: &mut dyn StmtVisitor) -> VisitorTypes;
+    fn as_any(&self) -> &dyn Any;
 }
 
 pub trait StmtVisitor {
@@ -341,6 +342,10 @@ impl Stmt for Block {
     fn accept(&self, visitor: &mut dyn StmtVisitor) -> VisitorTypes {
         visitor.visit_block_stmt(self)
     }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 // TODO super classes will be added later, commenting out super class code for now.
 pub struct Class {
@@ -363,6 +368,9 @@ impl Stmt for Class {
     fn accept(&self, visitor: &mut dyn StmtVisitor) -> VisitorTypes {
         visitor.visit_class_stmt(self)
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct Expression {
@@ -376,6 +384,9 @@ impl Expression {
 impl Stmt for Expression {
     fn accept(&self, visitor: &mut dyn StmtVisitor) -> VisitorTypes {
         visitor.visit_expression_stmt(self)
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -396,6 +407,9 @@ impl Function {
 impl Stmt for Function {
     fn accept(&self, visitor: &mut dyn StmtVisitor) -> VisitorTypes {
         visitor.visit_function_stmt(self)
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -421,6 +435,9 @@ impl Stmt for If {
     fn accept(&self, visitor: &mut dyn StmtVisitor) -> VisitorTypes {
         visitor.visit_if_stmt(self)
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct Print {
@@ -434,6 +451,9 @@ impl Print {
 impl Stmt for Print {
     fn accept(&self, visitor: &mut dyn StmtVisitor) -> VisitorTypes {
         visitor.visit_print_stmt(self)
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -451,6 +471,9 @@ impl Stmt for Return {
     fn accept(&self, visitor: &mut dyn StmtVisitor) -> VisitorTypes {
         visitor.visit_return_stmt(self)
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct Var {
@@ -466,6 +489,9 @@ impl Stmt for Var {
     fn accept(&self, visitor: &mut dyn StmtVisitor) -> VisitorTypes {
         visitor.visit_var_stmt(self)
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct While {
@@ -480,5 +506,8 @@ impl While {
 impl Stmt for While {
     fn accept(&self, visitor: &mut dyn StmtVisitor) -> VisitorTypes {
         visitor.visit_while_stmt(self)
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }

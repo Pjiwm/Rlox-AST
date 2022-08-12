@@ -518,7 +518,19 @@ impl StmtVisitor for Interpreter {
             .borrow()
             .borrow_mut()
             .define(stmt.name.dup().lexeme, DataType::Nil);
-        let class = LoxClass::new(stmt.name.dup().lexeme);
+
+        let mut methods: HashMap<String, LoxFunction> = HashMap::new();
+        for method in stmt.methods.iter() {
+            match method.as_any().downcast_ref::<Function>() {
+                Some(f) => {
+                    let function = LoxFunction::new(f, &self.environment.borrow());
+                    methods.insert(f.name.dup().lexeme, function);
+                }
+                None => (),
+            }
+        }
+
+        let class = LoxClass::new(stmt.name.dup().lexeme, methods);
         self.environment
             .borrow()
             .borrow_mut()

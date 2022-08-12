@@ -1,26 +1,21 @@
 use core::fmt;
-use std::{
-    borrow::{Borrow, BorrowMut},
-    cell::RefCell,
-    collections::HashMap,
-    fmt::Formatter,
-    rc::Rc,
-};
+use std::{cell::RefCell, collections::HashMap, fmt::Formatter, rc::Rc};
 
 use crate::{
     ast::VisitorTypes,
-    function::LoxCallable,
+    function::{LoxCallable, LoxFunction},
     interpreter::Interpreter,
-    token::{DataType, Token},
+    token::{self, DataType, Token},
 };
 
 #[derive(Debug, Clone)]
 pub struct LoxClass {
     name: String,
+    methods: HashMap<String, LoxFunction>,
 }
 impl LoxClass {
-    pub fn new(name: String) -> LoxClass {
-        LoxClass { name }
+    pub fn new(name: String, methods: HashMap<String, LoxFunction>) -> LoxClass {
+        LoxClass { name, methods }
     }
 }
 
@@ -60,6 +55,13 @@ impl LoxInstance {
                 self.fields.borrow().get(&token.lexeme).unwrap().clone(),
             ));
         }
+        // Might put this in a seperate function later.
+        if self.class.methods.contains_key(&token.lexeme) {
+            return VisitorTypes::DataType(Some(DataType::Function(
+                self.class.methods.get(&token.lexeme).unwrap().clone(),
+            )));
+        }
+
         VisitorTypes::RunTimeError {
             token: Some(token.dup()),
             msg: format!("Undefined property '{}'.", token.lexeme),

@@ -1,6 +1,5 @@
 use std::{
     fmt::{self, Display, Formatter},
-    io::{self, Write},
     time::SystemTime,
 };
 

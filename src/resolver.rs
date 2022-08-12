@@ -20,6 +20,7 @@ pub struct Resolver<'a> {
 enum FunctionType {
     None,
     Function,
+    Method
 }
 
 impl<'a> Resolver<'a> {
@@ -185,6 +186,13 @@ impl<'a> StmtVisitor for Resolver<'a> {
     fn visit_class_stmt(&mut self, stmt: &Class) -> VisitorTypes {
         self.declare(stmt.name.dup());
         self.define(stmt.name.dup());
+        for method in stmt.methods.iter() {
+            match method.as_any().downcast_ref::<Function>() {
+                Some(m) => self.resolve_function(m, FunctionType::Method),
+                None => (),
+            }
+            
+        }
         VisitorTypes::Void(())
     }
 
