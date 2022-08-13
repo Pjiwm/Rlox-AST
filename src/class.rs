@@ -1,5 +1,10 @@
 use core::fmt;
-use std::{cell::RefCell, collections::HashMap, fmt::Formatter, rc::Rc};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    fmt::Formatter,
+    rc::Rc,
+};
 
 use crate::{
     ast::VisitorTypes,
@@ -57,9 +62,9 @@ impl LoxInstance {
         }
         // Might put this in a seperate function later.
         if self.class.methods.contains_key(&token.lexeme) {
-            return VisitorTypes::DataType(Some(DataType::Function(
-                self.class.methods.get(&token.lexeme).unwrap().clone(),
-            )));
+            let method = self.class.methods.get(&token.lexeme).unwrap().clone();
+            // method.bind(Rc::new(self.clone()));
+            return VisitorTypes::DataType(Some(DataType::Function(method.bind(Rc::new(self.clone())))));
         }
 
         VisitorTypes::RunTimeError {

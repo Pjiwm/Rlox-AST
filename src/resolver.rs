@@ -1,4 +1,9 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{
+    borrow::{BorrowMut},
+    cell::RefCell,
+    collections::HashMap,
+    rc::Rc,
+};
 
 use crate::{
     ast::{
@@ -20,7 +25,7 @@ pub struct Resolver<'a> {
 enum FunctionType {
     None,
     Function,
-    Method
+    Method,
 }
 
 impl<'a> Resolver<'a> {
@@ -97,7 +102,7 @@ impl<'a> ExprVisitor for Resolver<'a> {
         let value = expr.value.clone();
         let expr: Rc<dyn Expr> = Rc::new(Assign::new(expr.name.dup(), value.clone()));
         self.resolve_expr(&value);
-        self.resolve_local(expr, &name);
+        self.resolve_local(Rc::clone(&expr), &name);
         VisitorTypes::Void(())
     }
 
@@ -146,7 +151,9 @@ impl<'a> ExprVisitor for Resolver<'a> {
     }
 
     fn visit_this_expr(&mut self, expr: &This) -> VisitorTypes {
-        todo!()
+        let dyn_expr: Rc<dyn Expr> = Rc::new(This::new(expr.keyword.dup()));
+        self.resolve_local(dyn_expr, &expr.keyword.dup());
+        VisitorTypes::Void(())
     }
 
     fn visit_unary_expr(&mut self, expr: &Unary) -> VisitorTypes {
@@ -186,13 +193,21 @@ impl<'a> StmtVisitor for Resolver<'a> {
     fn visit_class_stmt(&mut self, stmt: &Class) -> VisitorTypes {
         self.declare(stmt.name.dup());
         self.define(stmt.name.dup());
+        self.begin_scope();
+        self.scopes
+            .borrow()
+            .last()
+            .borrow_mut()
+            .unwrap()
+            .borrow_mut()
+            .insert("this".to_string(), true);
         for method in stmt.methods.iter() {
             match method.as_any().downcast_ref::<Function>() {
                 Some(m) => self.resolve_function(m, FunctionType::Method),
                 None => (),
             }
-            
         }
+        self.end_scope();
         VisitorTypes::Void(())
     }
 

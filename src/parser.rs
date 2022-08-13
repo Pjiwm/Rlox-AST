@@ -6,7 +6,7 @@ use std::{
 use crate::{
     ast::{
         Assign, Binary, Block, Call, Class, Expr, Expression, Function, Get, Grouping, If, Literal,
-        Logical, Print, Return, Set, Stmt, Unary, Var, Variable, While,
+        Logical, Print, Return, Set, Stmt, This, Unary, Var, Variable, While,
     },
     error::{self, parse_error},
     token::{DataType, Token, TokenType},
@@ -514,6 +514,11 @@ impl<'a> Parser<'a> {
                 data_type.clone().literal.unwrap(),
             ))));
         }
+
+        if self.matches(&[TokenType::This]) {
+            return Ok(Rc::new(This::new(self.previous().dup())));
+        }
+
         if self.matches(&[TokenType::Identifier]) {
             return Ok(Rc::new(Variable::new(self.previous().dup())));
         }

@@ -466,7 +466,9 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_this_expr(&mut self, expr: &This) -> VisitorTypes {
-        todo!()
+        let keyword = expr.keyword.dup();
+        let dyn_expr: Rc<dyn Expr> = Rc::new(This::new(expr.keyword.dup()));
+        self.lookup_variable(&keyword, &dyn_expr)
     }
 
     fn visit_unary_expr(&mut self, expr: &Unary) -> VisitorTypes {
