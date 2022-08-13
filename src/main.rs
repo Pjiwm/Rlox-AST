@@ -1,5 +1,7 @@
 use std::{env, process};
 
+use colored::Colorize;
+
 mod ast;
 mod ast_printer;
 mod class;
@@ -24,7 +26,13 @@ fn main() {
         println!("Usage: jlox [script]");
         process::exit(64);
     } else if args.len() == 2 {
-        source::run_file(args[1].as_str()).unwrap();
+        match source::run_file(args[1].as_str()) {
+            Ok(_) => {}
+            Err(e) => {
+                println!("{}", format!("{}", e).red());
+                process::exit(65);
+            }
+        }
     } else {
         repl::prompt();
     }
