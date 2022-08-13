@@ -1,10 +1,5 @@
 use core::fmt;
-use std::{
-    cell::RefCell,
-    collections::HashMap,
-    fmt::Formatter,
-    rc::Rc,
-};
+use std::{cell::RefCell, collections::HashMap, fmt::Formatter, rc::Rc};
 
 use crate::{
     ast::VisitorTypes,
@@ -25,13 +20,25 @@ impl LoxClass {
 }
 
 impl LoxCallable for LoxClass {
-    fn call(&self, _: &mut Interpreter, _: Vec<DataType>) -> DataType {
-        let instance = LoxInstance::new(self.clone());
-        DataType::Instance(Rc::new(instance))
+    fn call(&self, interpreter: &mut Interpreter, arguments: Vec<DataType>) -> DataType {
+        let instance = Rc::new(LoxInstance::new(self.clone()));
+        let initializer = self.methods.get("init");
+        if initializer.is_some() {
+            initializer
+                .unwrap()
+                .bind(instance.clone())
+                .call(interpreter, arguments);
+        }
+        DataType::Instance(instance)
     }
 
     fn arity(&self) -> usize {
-        0
+        let initializer = self.methods.get("init");
+        if initializer.is_some() {
+            initializer.unwrap().arity()
+        } else {
+            0
+        }
     }
 }
 
@@ -62,7 +69,9 @@ impl LoxInstance {
         }
         if self.class.methods.contains_key(&token.lexeme) {
             let method = self.class.methods.get(&token.lexeme).unwrap().clone();
-            return VisitorTypes::DataType(Some(DataType::Function(method.bind(Rc::new(self.clone())))));
+            return VisitorTypes::DataType(Some(DataType::Function(
+                method.bind(Rc::new(self.clone())),
+            )));
         }
 
         VisitorTypes::RunTimeError {

@@ -1,9 +1,4 @@
-use std::{
-    borrow::{BorrowMut},
-    cell::RefCell,
-    collections::HashMap,
-    rc::Rc,
-};
+use std::{borrow::BorrowMut, cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
     ast::{
@@ -20,12 +15,19 @@ pub struct Resolver<'a> {
     interpreter: &'a Interpreter,
     scopes: RefCell<Vec<RefCell<HashMap<String, bool>>>>,
     current_function: RefCell<FunctionType>,
+    current_class: RefCell<ClassType>,
 }
 #[derive(PartialEq)]
 enum FunctionType {
     None,
     Function,
     Method,
+    Initializer,
+}
+#[derive(PartialEq)]
+enum ClassType {
+    None,
+    Class,
 }
 
 impl<'a> Resolver<'a> {
@@ -34,6 +36,7 @@ impl<'a> Resolver<'a> {
             interpreter,
             scopes: RefCell::new(Vec::new()),
             current_function: RefCell::new(FunctionType::None),
+            current_class: RefCell::new(ClassType::None),
         }
     }
 
@@ -151,6 +154,9 @@ impl<'a> ExprVisitor for Resolver<'a> {
     }
 
     fn visit_this_expr(&mut self, expr: &This) -> VisitorTypes {
+        if *self.current_class.borrow() == ClassType::None {
+            error::resolve_error(&expr.keyword, "Cannot use 'this' outside of a class.");
+        }
         let dyn_expr: Rc<dyn Expr> = Rc::new(This::new(expr.keyword.dup()));
         self.resolve_local(dyn_expr, &expr.keyword.dup());
         VisitorTypes::Void(())
@@ -191,6 +197,7 @@ impl<'a> StmtVisitor for Resolver<'a> {
     }
 
     fn visit_class_stmt(&mut self, stmt: &Class) -> VisitorTypes {
+        let enclosing_class = self.current_class.replace(ClassType::Class);
         self.declare(stmt.name.dup());
         self.define(stmt.name.dup());
         self.begin_scope();
@@ -202,12 +209,19 @@ impl<'a> StmtVisitor for Resolver<'a> {
             .borrow_mut()
             .insert("this".to_string(), true);
         for method in stmt.methods.iter() {
+            let mut declaration = FunctionType::Method;
             match method.as_any().downcast_ref::<Function>() {
-                Some(m) => self.resolve_function(m, FunctionType::Method),
+                Some(m) => {
+                    if m.name.lexeme == "init" {
+                        declaration = FunctionType::Initializer;
+                    }
+                    self.resolve_function(m, declaration)
+                }
                 None => (),
             }
         }
         self.end_scope();
+        self.current_class.replace(enclosing_class);
         VisitorTypes::Void(())
     }
 
@@ -244,6 +258,9 @@ impl<'a> StmtVisitor for Resolver<'a> {
         }
 
         if let Some(value) = &stmt.value {
+            if *self.current_function.borrow_mut() == FunctionType::Initializer {
+                error::resolve_error(&stmt.keyword, "Can't return a value from an initializer.");
+            }
             self.resolve_expr(value);
         }
         VisitorTypes::Void(())

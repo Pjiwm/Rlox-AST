@@ -22,26 +22,34 @@ pub struct LoxFunction {
     pub params: Rc<Vec<Token>>,
     name: Box<Token>,
     closure: Rc<RefCell<Environment>>,
+    is_init: bool,
 }
 
 impl LoxFunction {
-    pub fn new(declaration: &Function, closure: &Rc<RefCell<Environment>>) -> LoxFunction {
+    pub fn new(
+        declaration: &Function,
+        closure: &Rc<RefCell<Environment>>,
+        is_init: bool,
+    ) -> LoxFunction {
         LoxFunction {
             body: Rc::clone(&declaration.body),
             params: Rc::clone(&declaration.params),
             name: Box::new(declaration.name.dup()),
             closure: Rc::clone(closure),
+            is_init,
         }
     }
 
     pub fn bind(&self, instance: Rc<LoxInstance>) -> LoxFunction {
         let env = RefCell::new(Environment::new_enclosing(Rc::clone(&self.closure)));
-        env.borrow_mut().define("this".to_string(), DataType::Instance(instance.clone()));
+        env.borrow_mut()
+            .define("this".to_string(), DataType::Instance(instance.clone()));
         LoxFunction {
             body: Rc::clone(&self.body),
             params: Rc::clone(&self.params),
             name: self.name.clone(),
             closure: Rc::new(env),
+            is_init: self.is_init,
         }
     }
 }
@@ -58,7 +66,16 @@ impl LoxCallable for LoxFunction {
         }
         let statements = Rc::new(&self.body);
         match interpreter.execute_block(&statements, environment) {
-            VisitorTypes::Return(Some(d)) => d,
+            VisitorTypes::Return(Some(d)) => {
+                if self.is_init {
+                    match self.closure.borrow().get_at(0, "this") {
+                        VisitorTypes::DataType(this) => this.unwrap(),
+                        _ => DataType::Nil,
+                    }
+                } else {
+                    d
+                }
+            }
             _ => DataType::Nil,
         }
     }

@@ -136,7 +136,10 @@ impl Interpreter {
     fn lookup_variable(&self, name: &Token, expr: &Rc<dyn Expr>) -> VisitorTypes {
         let local = HashedExpr::new(expr.clone());
         if let Some(distance) = self.locals.borrow().get(&local) {
-            self.environment.borrow().borrow().get_at(*distance, name)
+            self.environment
+                .borrow()
+                .borrow()
+                .get_at(*distance, &name.lexeme)
         } else {
             self.globals.borrow().get(name)
         }
@@ -348,6 +351,8 @@ impl ExprVisitor for Interpreter {
         for expr in &expr.arguments {
             let data_type = match expr.accept(self) {
                 VisitorTypes::DataType(s) => s,
+                VisitorTypes::Return(r) => r,
+                VisitorTypes::RunTimeError { token: _, msg: _ } => Some(DataType::Nil),
                 _ => panic!("Interpreter entered impossible state."),
             };
             if let Some(d) = data_type {
@@ -521,7 +526,9 @@ impl StmtVisitor for Interpreter {
         for method in stmt.methods.iter() {
             match method.as_any().downcast_ref::<Function>() {
                 Some(f) => {
-                    let function = LoxFunction::new(f, &self.environment.borrow());
+                    let is_init = f.name.dup().lexeme == "init";
+                    let env = &self.environment.borrow();
+                    let function = LoxFunction::new(f, env, is_init);
                     methods.insert(f.name.dup().lexeme, function);
                 }
                 None => (),
@@ -545,7 +552,7 @@ impl StmtVisitor for Interpreter {
     }
 
     fn visit_function_stmt(&mut self, stmt: &Function) -> VisitorTypes {
-        let function = LoxFunction::new(stmt, &self.environment.borrow());
+        let function = LoxFunction::new(stmt, &self.environment.borrow(), false);
         self.environment
             .borrow()
             .borrow_mut()

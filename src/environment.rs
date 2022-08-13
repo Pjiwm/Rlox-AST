@@ -47,9 +47,9 @@ impl Environment {
         }
     }
 
-    pub fn get_at(&self, distance: usize, name: &Token) -> VisitorTypes {
+    pub fn get_at(&self, distance: usize, name: &str) -> VisitorTypes {
         if distance == 0 {
-            VisitorTypes::DataType(Some(self.values.get(&name.lexeme).unwrap().clone()))
+            VisitorTypes::DataType(Some(self.values.get(&name.to_string()).unwrap().clone()))
         } else {
             self.enclosing
                 .as_ref()
