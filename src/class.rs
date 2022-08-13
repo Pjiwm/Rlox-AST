@@ -60,10 +60,8 @@ impl LoxInstance {
                 self.fields.borrow().get(&token.lexeme).unwrap().clone(),
             ));
         }
-        // Might put this in a seperate function later.
         if self.class.methods.contains_key(&token.lexeme) {
             let method = self.class.methods.get(&token.lexeme).unwrap().clone();
-            // method.bind(Rc::new(self.clone()));
             return VisitorTypes::DataType(Some(DataType::Function(method.bind(Rc::new(self.clone())))));
         }
 

@@ -340,7 +340,7 @@ impl ExprVisitor for Interpreter {
         let callee = match expr.callee.accept(self) {
             VisitorTypes::DataType(d) => d,
             VisitorTypes::RunTimeError { token, msg } => {
-                return self.visitor_runtime_error(token.as_ref(), &msg);
+                return VisitorTypes::RunTimeError { token, msg };
             }
             _ => panic!("Interpreter entered impossible state."),
         };
