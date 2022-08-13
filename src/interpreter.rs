@@ -348,11 +348,7 @@ impl ExprVisitor for Interpreter {
         for expr in &expr.arguments {
             let data_type = match expr.accept(self) {
                 VisitorTypes::DataType(s) => s,
-                VisitorTypes::String(_) => todo!(),
-                VisitorTypes::RunTimeError { token, msg } => todo!(),
-                VisitorTypes::Return(_) => todo!(),
-                VisitorTypes::Void(_) => todo!(),
-                // _ => panic!("Interpreter entered impossible state."),
+                _ => panic!("Interpreter entered impossible state."),
             };
             if let Some(d) = data_type {
                 arguments.push(d);

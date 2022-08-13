@@ -5,7 +5,7 @@ use crate::{
     ast::VisitorTypes,
     function::{LoxCallable, LoxFunction},
     interpreter::Interpreter,
-    token::{self, DataType, Token},
+    token::{DataType, Token},
 };
 
 #[derive(Debug, Clone)]
