@@ -31,7 +31,7 @@ pub fn run(source: &str, is_repl: bool) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn disable_erros() {
+pub fn disable_errors() {
     error::set_error(false);
     error::set_runtime_error(false);
     error::set_resolve_error(false);

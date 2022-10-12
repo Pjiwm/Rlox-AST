@@ -30,7 +30,7 @@ pub fn prompt() {
                     }
                     Err(_) => {
                         input = remove_last_cmd(&input, &cmd);
-                        run::disable_erros();
+                        run::disable_errors();
                     }
                 }
             }

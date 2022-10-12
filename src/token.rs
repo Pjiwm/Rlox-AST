@@ -57,13 +57,13 @@ pub enum TokenType {
     Star,
     // one or two character tokens.
     Bang,
-    Bangequal,
+    BangEqual,
     Equal,
-    Equalequal,
+    EqualEqual,
     Greater,
-    Greaterequal,
+    GreaterEqual,
     Less,
-    Lessequal,
+    LessEqual,
     // literals.
     Identifier,
     String,

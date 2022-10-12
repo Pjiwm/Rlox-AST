@@ -60,10 +60,10 @@ impl Scanner {
             '*' => self.add_token(TokenType::Star),
             // These lexemes can be either a one or two character long token.
             // The pick and add token fn, will handle this.
-            '!' => self.pick_and_add_token(TokenType::Bangequal, TokenType::Bang, '='),
-            '=' => self.pick_and_add_token(TokenType::Equalequal, TokenType::Equal, '='),
-            '<' => self.pick_and_add_token(TokenType::Lessequal, TokenType::Less, '='),
-            '>' => self.pick_and_add_token(TokenType::Greaterequal, TokenType::Greater, '='),
+            '!' => self.pick_and_add_token(TokenType::BangEqual, TokenType::Bang, '='),
+            '=' => self.pick_and_add_token(TokenType::EqualEqual, TokenType::Equal, '='),
+            '<' => self.pick_and_add_token(TokenType::LessEqual, TokenType::Less, '='),
+            '>' => self.pick_and_add_token(TokenType::GreaterEqual, TokenType::Greater, '='),
             '"' => self.string(),
             '/' => {
                 // This is for single line comments

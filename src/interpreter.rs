@@ -288,7 +288,7 @@ impl ExprVisitor for Interpreter {
                     return self.visitor_runtime_error(Some(&expr.operator), "Expected a number.");
                 }
             },
-            TokenType::Equalequal => match (left, right) {
+            TokenType::EqualEqual => match (left, right) {
                 (Some(l), Some(r)) => DataType::Bool(self.is_equal(&l, &r)),
                 (None, None) => DataType::Bool(true),
                 (Some(_), None) => DataType::Bool(false),
@@ -303,7 +303,7 @@ impl ExprVisitor for Interpreter {
                     );
                 }
             },
-            TokenType::Greaterequal => match (left, right) {
+            TokenType::GreaterEqual => match (left, right) {
                 (Some(DataType::Number(l)), Some(DataType::Number(r))) => DataType::Bool(l >= r),
                 _ => {
                     return self.visitor_runtime_error(
@@ -321,7 +321,7 @@ impl ExprVisitor for Interpreter {
                     );
                 }
             },
-            TokenType::Lessequal => match (left, right) {
+            TokenType::LessEqual => match (left, right) {
                 (Some(DataType::Number(l)), Some(DataType::Number(r))) => DataType::Bool(l <= r),
                 _ => {
                     return self.visitor_runtime_error(

@@ -89,19 +89,19 @@ impl<'a> Parser<'a> {
             self.expression_statement()
         }
     }
-    /// Consumes the current Token and checks if it's an open paranthesis.
+    /// Consumes the current Token and checks if it's an open parenthesis.
     /// The parser advances and with the next token we grab the initializer expression.
     /// We match the current character and if it's a semicolon we pur None in the initializer.
     /// If this is not the case the next check is to see if it's a Var. As a for loop can initialize a variable,
-    /// within the paranthesis.
+    /// within the parenthesis.
     /// If this isn't the case either we call an expression statement.
     /// The parser has advanced and next we check for the condition.
     /// If the current token is a semicolon we set the condition to None.
     /// Else we call an expression. After this the next token should be a semicolon, else we throw an error.
     /// The parser has advanced and next we check for the increment.
-    /// If it's a right paranthesis we set the increment to None.
+    /// If it's a right parenthesis we set the increment to None.
     /// Else we call an expression.
-    /// The parser has advanced again and we make sure the next token is a right paranthesis.
+    /// The parser has advanced again and we make sure the next token is a right parenthesis.
     /// The body for the for loop is than grabbed by calling for a statement.
     /// If the increment value is not None we create a block Object with e vector of statements.
     /// In this vector is the increment value and the body. This created object will be assigned to the body.
@@ -215,7 +215,7 @@ impl<'a> Parser<'a> {
         Ok(Rc::new(Return::new(keyword, value)))
     }
     /// Consumes the current token in the parser which should be the name of the variable.
-    /// Next it checks if the next token is an = token. If it is, it grabs the exprssion of the next token
+    /// Next it checks if the next token is an = token. If it is, it grabs the expression of the next token
     /// and applies it as the variables value.
     /// Before creating and returning the Var object, consume is called, this is to check if the next token is a semicolon.
     /// If it is not, it will throw an error, as all statements should end with a semicolon (;).
@@ -234,7 +234,7 @@ impl<'a> Parser<'a> {
         Ok(Rc::new(Var::new(name.dup(), initializer)))
     }
     /// Calls the consume function to check for a left paren. If it is not, it will throw an error.
-    /// A While statements condition should be between parantheses.
+    /// A While statements condition should be between parentheses.
     /// After that the parser has advanced and we call the expression function
     /// to get the condition of the While statement.
     /// After that the parser has advanced again and with the consume function we can check
@@ -250,7 +250,7 @@ impl<'a> Parser<'a> {
         Ok(Rc::new(While::new(condition, body)))
     }
     /// An expression statement is an expression made into a statement by ending it with a semicolon.
-    /// The function grabs the expression by going down the precendence tree for expressions.
+    /// The function grabs the expression by going down the precedence tree for expressions.
     /// It checks with consume if the next Token is a semicolon (;) and if it is the expression is used to make
     /// an Expression Statement object.
     fn expression_statement(&mut self) -> Result<Rc<dyn Stmt>, Error> {
@@ -265,7 +265,7 @@ impl<'a> Parser<'a> {
     /// Function parameters are split by a comma, when it's done looking for parameters the parser consumes twice.
     /// To make sure the the function parameters are closed of by a closing parenthesis ')' and followed by a opening
     /// curly brace. As the next block is the body of the function.
-    /// The block function is called to grab the functions body and the established paremeters, body and function name
+    /// The block function is called to grab the functions body and the established parameters, body and function name
     /// are put into a Function object.
     fn function(&mut self, kind: &str) -> Result<Rc<dyn Stmt>, Error> {
         let kind_error = format!("Expect {} name.", kind);
@@ -306,11 +306,11 @@ impl<'a> Parser<'a> {
     }
     /// Assigns a value to a variable or field.
     /// If the expression is of type 'Variable', it will assign the value to the variable.
-    /// Because the value is one position furhter than the parser has advanced via recursion the next expression
+    /// Because the value is one position further than the parser has advanced via recursion the next expression
     /// can be grabbed.
     /// A new Assignment object is returned with the variable's name and the value we got via recursion.
     /// If the expression is of type 'Get', it will assign the value to the field instead.
-    /// If the epxression is not of type 'Variable' or 'Get' (get = accessing field), it will return the expression.
+    /// If the expression is not of type 'Variable' or 'Get' (get = accessing field), it will return the expression.
     fn assignment(&mut self) -> Result<Rc<dyn Expr>, Error> {
         let expr = self.or()?;
         if self.matches(&[TokenType::Equal]) {
@@ -347,7 +347,7 @@ impl<'a> Parser<'a> {
         }
         Ok(expr)
     }
-    /// Grabs and expression by goin down the precedence tree.
+    /// Grabs and expression by going down the precedence tree.
     /// Checks if the current Token is an AND operator.
     /// It will make a Logical object with the expression we already grabbed (left),
     /// The operator AND and
@@ -368,7 +368,7 @@ impl<'a> Parser<'a> {
     /// and because the parser has advanced we grab the expression on the right side.
     fn equality(&mut self) -> Result<Rc<dyn Expr>, Error> {
         let mut expr = self.comparison();
-        while self.matches(&[TokenType::Equalequal, TokenType::Bangequal]) {
+        while self.matches(&[TokenType::EqualEqual, TokenType::BangEqual]) {
             let operator = self.previous().dup();
             let right = self.comparison();
             expr = Ok(Rc::new(Binary::new(expr?, operator.clone(), right?)));
@@ -383,9 +383,9 @@ impl<'a> Parser<'a> {
         let mut expr = self.term();
         let comparison_vec = vec![
             TokenType::Greater,
-            TokenType::Greaterequal,
+            TokenType::GreaterEqual,
             TokenType::Less,
-            TokenType::Lessequal,
+            TokenType::LessEqual,
         ];
         while self.matches(&comparison_vec) {
             let operator = self.previous().dup();
@@ -415,7 +415,7 @@ impl<'a> Parser<'a> {
     /// If the token is a factor, it will return the factor by making a binary expression.
     /// The binary expression contains out of the unary expression * or / and then another unary expression.
     /// Valid examples: 1 * 3, 20 / 3. "hello" - world, would also parse,
-    /// however during interpretting this will be caught as an error.
+    /// however during interpreting this will be caught as an error.
     fn factor(&mut self) -> Result<Rc<dyn Expr>, Error> {
         let mut expr = self.unary();
         while self.matches(&[TokenType::Star, TokenType::Slash]) {
@@ -426,7 +426,7 @@ impl<'a> Parser<'a> {
         expr
     }
     /// Returns the unary operator if it exists. (!, or -)
-    /// If it doesn't exist, it'll return an epxression from the call method.
+    /// If it doesn't exist, it'll return an expression from the call method.
     /// If it does exist, it'll return an Unary expression with an operator and the expression after it
     /// example: !false, -a
     /// The reason the right hand side will not give back the same expression is because the parser has advanced already.
@@ -439,18 +439,18 @@ impl<'a> Parser<'a> {
         self.call()
     }
     /// This function returns a Call object and is used to get the arguments of a function call.
-    /// The function starts by checking if the current token in the parser isn't a right paranthesis.
+    /// The function starts by checking if the current token in the parser isn't a right parenthesis.
     /// If this is the case a function call would look like this: doSomething(). Meaning no parameters are in the function.
     /// If this is the case when the Call object is made an empty vec of arguments is passed.
     /// The callee parameter which is also used for the Call object comes comes from the call method which comes from a primary function call.
     /// A call object also stores the closing paranthesis. This is done by calling self.consume.
-    /// The parse will also advance furhter when this function is called.
+    /// The parse will also advance further when this function is called.
     /// If consume is called and the current Token isn't a right parenthesis an error will be given.
     /// If the function contains arguments a loop will run. The loop is written in a do while form.
     /// This means the code in the loop will be at least run once. An argument is added to the arguments vector each time.
-    /// This new argument is given from the expression function. Everytime this function is called the parser advances to the next token.
+    /// This new argument is given from the expression function. Every time this function is called the parser advances to the next token.
     /// If the next token isn't a comma it will break the 'do while loop' as this means this was the last argument of the function.
-    /// This is because function arguments are seperated by a comma. Example: doSomething(one, two three)
+    /// This is because function arguments are separated by a comma. Example: doSomething(one, two three)
     fn finish_call(&mut self, callee: Rc<dyn Expr>) -> Result<Rc<dyn Expr>, Error> {
         let mut arguments = Vec::<Rc<dyn Expr>>::new();
         if !self.check(TokenType::RightParen) {
@@ -531,7 +531,7 @@ impl<'a> Parser<'a> {
 
         Err(self.parse_error(self.peek(), "Expect expression."))
     }
-    /// Loops over the given token types in the paremeter.
+    /// Loops over the given token types in the parameter.
     /// If the next token is one of the given token types, it will return true and advances the parser
     /// to the next token.
     fn matches(&mut self, types: &[TokenType]) -> bool {

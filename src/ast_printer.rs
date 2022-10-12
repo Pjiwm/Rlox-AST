@@ -21,7 +21,7 @@ impl AstPrinter {
         return_string
     }
 
-    fn paranthesize(&mut self, name: &String, exprs: Vec<&dyn Expr>) -> VisitorTypes {
+    fn parenthesize(&mut self, name: &String, exprs: Vec<&dyn Expr>) -> VisitorTypes {
         let mut s = String::new();
         s.push_str("(");
         s.push_str(name);
@@ -46,7 +46,7 @@ impl AstPrinter {
 impl ExprVisitor for AstPrinter {
     fn visit_binary_expr(&mut self, expr: &Binary) -> VisitorTypes {
         let expressions = vec![expr.left.as_ref(), expr.right.as_ref()];
-        self.paranthesize(&expr.operator.lexeme, expressions)
+        self.parenthesize(&expr.operator.lexeme, expressions)
     }
 
     fn visit_call_expr(&mut self, expr: &Call) -> VisitorTypes {
@@ -54,17 +54,17 @@ impl ExprVisitor for AstPrinter {
         for arg in &expr.arguments {
             expressions.push(arg.as_ref());
         }
-        self.paranthesize(&expr.paren.lexeme, expressions)
+        self.parenthesize(&expr.paren.lexeme, expressions)
     }
 
     fn visit_get_expr(&mut self, expr: &Get) -> VisitorTypes {
         let expressions = vec![expr.object.as_ref()];
-        self.paranthesize(&expr.name.lexeme, expressions)
+        self.parenthesize(&expr.name.lexeme, expressions)
     }
 
     fn visit_grouping_expr(&mut self, expr: &Grouping) -> VisitorTypes {
         let expressions = vec![expr.expression.as_ref()];
-        self.paranthesize(&"group".to_owned(), expressions)
+        self.parenthesize(&"group".to_owned(), expressions)
     }
 
     fn visit_literal_expr(&mut self, expr: &Literal) -> VisitorTypes {
@@ -86,12 +86,12 @@ impl ExprVisitor for AstPrinter {
 
     fn visit_logical_expr(&mut self, expr: &Logical) -> VisitorTypes {
         let expressions = vec![expr.left.as_ref(), expr.right.as_ref()];
-        self.paranthesize(&expr.operator.lexeme, expressions)
+        self.parenthesize(&expr.operator.lexeme, expressions)
     }
 
     fn visit_set_expr(&mut self, expr: &Set) -> VisitorTypes {
         let expressions = vec![expr.object.as_ref(), expr.value.as_ref()];
-        self.paranthesize(&expr.name.lexeme, expressions)
+        self.parenthesize(&expr.name.lexeme, expressions)
     }
 
     fn visit_super_expr(&mut self, _expr: &Super) -> VisitorTypes {
@@ -103,8 +103,8 @@ impl ExprVisitor for AstPrinter {
     }
 
     fn visit_unary_expr(&mut self, expr: &Unary) -> VisitorTypes {
-        let expresssions = vec![expr.right.as_ref()];
-        self.paranthesize(&expr.operator.lexeme, expresssions)
+        let expressions = vec![expr.right.as_ref()];
+        self.parenthesize(&expr.operator.lexeme, expressions)
     }
 
     fn visit_variable_expr(&mut self, expr: &Variable) -> VisitorTypes {
@@ -113,6 +113,6 @@ impl ExprVisitor for AstPrinter {
 
     fn visit_assign_expr(&mut self, expr: &Assign) -> VisitorTypes {
         let expressions = vec![expr.value.as_ref()];
-        self.paranthesize(&expr.name.lexeme, expressions)
+        self.parenthesize(&expr.name.lexeme, expressions)
     }
 }
