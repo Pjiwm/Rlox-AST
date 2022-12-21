@@ -22,18 +22,18 @@ extern crate lazy_static;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    if args.len() > 2 {
-        println!("Usage: jlox [script]");
-        process::exit(64);
-    } else if args.len() == 2 {
-        match source::run_file(args[1].as_str()) {
+    match args.len() {
+        2 => match source::run_file(args[1].as_str()) {
             Ok(_) => {}
             Err(e) => {
                 println!("{}", format!("{}", e).red());
                 process::exit(65);
             }
+        },
+        1 | 0 => repl::prompt(),
+        _ => {
+            println!("Usage: jlox [script]");
+            process::exit(64);
         }
-    } else {
-        repl::prompt();
     }
 }

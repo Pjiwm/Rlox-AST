@@ -8,7 +8,7 @@ use crate::{error, interpreter::Interpreter, parser, resolver::Resolver, scanner
 pub fn run(source: &str, is_repl: bool) -> Result<(), Error> {
     let mut token_scanner = scanner::Scanner::new(source.to_string());
     let tokens = token_scanner.scan_tokens();
-    let mut parser = parser::Parser::new(&tokens);
+    let mut parser = parser::Parser::new(tokens);
     let statements = match parser.parse() {
         Ok(expr) => expr,
         Err(e) => {

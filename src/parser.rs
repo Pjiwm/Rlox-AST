@@ -72,7 +72,7 @@ impl<'a> Parser<'a> {
     /// and not in any of the other functions called below.
     fn statement(&mut self) -> Result<Rc<dyn Stmt>, Error> {
         if self.matches(&[TokenType::For]) {
-            return self.for_statement();
+            self.for_statement()
         } else if self.matches(&[TokenType::If]) {
             self.if_statement()
         } else if self.matches(&[TokenType::Print]) {
@@ -434,7 +434,7 @@ impl<'a> Parser<'a> {
         if self.matches(&[TokenType::Bang, TokenType::Minus]) {
             let operator = self.previous().dup();
             let right = self.unary();
-            return Ok(Rc::new(Unary::new(operator.clone(), right?)));
+            return Ok(Rc::new(Unary::new(operator, right?)));
         }
         self.call()
     }
@@ -541,7 +541,7 @@ impl<'a> Parser<'a> {
                 return true;
             }
         }
-        return false;
+        false
     }
     /// Gets the current Token in the parser and advances to the next one.
     fn consume(&mut self, token_type: TokenType, message: &str) -> Result<Token, Error> {
@@ -575,7 +575,6 @@ impl<'a> Parser<'a> {
                 }
                 _ => {
                     self.advance();
-                    ()
                 }
             }
         }

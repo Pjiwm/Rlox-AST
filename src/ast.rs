@@ -178,7 +178,7 @@ pub struct Literal {
 }
 impl Literal {
     pub fn new(value: Option<DataType>) -> Self {
-        Self { value: value }
+        Self { value }
     }
 }
 impl Expr for Literal {

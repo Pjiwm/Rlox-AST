@@ -22,10 +22,8 @@ impl LoxClass {
 impl LoxCallable for LoxClass {
     fn call(&self, interpreter: &mut Interpreter, arguments: Vec<DataType>) -> DataType {
         let instance = Rc::new(LoxInstance::new(self.clone()));
-        let initializer = self.methods.get("init");
-        if initializer.is_some() {
+        if let Some(initializer) = self.methods.get("init") {
             initializer
-                .unwrap()
                 .bind(instance.clone())
                 .call(interpreter, arguments);
         }
@@ -33,9 +31,8 @@ impl LoxCallable for LoxClass {
     }
 
     fn arity(&self) -> usize {
-        let initializer = self.methods.get("init");
-        if initializer.is_some() {
-            initializer.unwrap().arity()
+        if let Some(initializer) = self.methods.get("init") {
+            initializer.arity()
         } else {
             0
         }

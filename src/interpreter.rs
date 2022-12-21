@@ -50,7 +50,7 @@ impl Interpreter {
     pub fn interpret(&mut self, statements: Vec<Rc<dyn Stmt>>) {
         for (i, stmt) in statements.iter().enumerate() {
             self.is_last_statement = i == statements.len() - 1;
-            self.execute(&stmt);
+            self.execute(stmt);
         }
     }
     pub fn execute_block(
@@ -60,12 +60,9 @@ impl Interpreter {
     ) -> VisitorTypes {
         let previous = self.environment.replace(Rc::new(RefCell::new(environment)));
         for stmt in statements.iter() {
-            match self.execute(&stmt.clone()) {
-                VisitorTypes::Return(r) => {
-                    self.environment.replace(previous);
-                    return VisitorTypes::Return(r);
-                }
-                _ => (),
+            if let VisitorTypes::Return(r) = self.execute(&stmt.clone()) {
+                self.environment.replace(previous);
+                return VisitorTypes::Return(r);
             }
         }
         self.environment.replace(previous);
@@ -96,10 +93,7 @@ impl Interpreter {
                 }
                 number
             }
-            Some(DataType::Bool(b)) => {
-                let string = b.to_string();
-                string.to_owned()
-            }
+            Some(DataType::Bool(b)) => b.to_string(),
             Some(DataType::Nil) => "nil".to_string(),
             Some(DataType::Function(f)) => format!("{f}"),
             Some(DataType::Native(n)) => format!("{n}"),
@@ -146,12 +140,9 @@ impl Interpreter {
     }
 
     fn repl_printer(&self, expr: &VisitorTypes) {
-        match expr {
-            VisitorTypes::DataType(d) => {
-                let value = self.repl_stringify(d.clone());
-                println!("{value}");
-            }
-            _ => {}
+        if let VisitorTypes::DataType(d) = expr {
+            let value = self.repl_stringify(d.clone());
+            println!("{value}");
         }
     }
 
@@ -184,10 +175,7 @@ impl Interpreter {
     }
 
     fn visitor_runtime_error(&self, token: Option<&Token>, msg: &str) -> VisitorTypes {
-        let token_clone = match token {
-            Some(t) => Some(t.clone()),
-            None => None,
-        };
+        let token_clone = token.cloned();
         self.runtime_error(&token_clone, msg);
         VisitorTypes::RunTimeError {
             token: token_clone,
@@ -359,9 +347,8 @@ impl ExprVisitor for Interpreter {
                 arguments.push(d);
             }
         }
-        let function: Rc<dyn LoxCallable>;
-        if let Some(c) = callee {
-            function = match c {
+        let function: Rc<dyn LoxCallable> = if let Some(c) = callee {
+            match c {
                 DataType::Function(f) => Rc::new(f),
                 DataType::Native(n) => n.function,
                 DataType::Class(c) => Rc::new(c),
@@ -375,7 +362,7 @@ impl ExprVisitor for Interpreter {
         } else {
             return self
                 .visitor_runtime_error(Some(&token), "Can only call functions and classes.");
-        }
+        };
         if arguments.len() != function.arity() {
             let msg = format!(
                 "Expected {} arguments but got {}.",
@@ -399,11 +386,8 @@ impl ExprVisitor for Interpreter {
             _ => return self.visitor_runtime_error(Some(&expr.name.dup()), err_msg),
         };
 
-        match res {
-            VisitorTypes::RunTimeError { token, msg } => {
-                return self.visitor_runtime_error(token.as_ref(), &msg);
-            }
-            _ => (),
+        if let VisitorTypes::RunTimeError { token, msg } = res {
+            return self.visitor_runtime_error(token.as_ref(), &msg);
         }
         res
     }
@@ -418,15 +402,7 @@ impl ExprVisitor for Interpreter {
 
     fn visit_logical_expr(&mut self, expr: &Logical) -> VisitorTypes {
         let left = match expr.left.accept(self) {
-            VisitorTypes::DataType(d) => match d {
-                Some(d) => d,
-                None => {
-                    return self.visitor_runtime_error(
-                        Some(&expr.operator),
-                        "Expected a binary operation with proper data types.",
-                    );
-                }
-            },
+            VisitorTypes::DataType(Some(d)) => d,
             _ => {
                 return self.visitor_runtime_error(
                     Some(&expr.operator),
@@ -438,10 +414,8 @@ impl ExprVisitor for Interpreter {
             if self.is_truthy(&left) {
                 return VisitorTypes::DataType(Some(left));
             }
-        } else {
-            if !self.is_truthy(&left) {
-                return VisitorTypes::DataType(Some(left));
-            }
+        } else if !self.is_truthy(&left) {
+            return VisitorTypes::DataType(Some(left));
         }
         expr.right.accept(self)
     }
@@ -459,7 +433,6 @@ impl ExprVisitor for Interpreter {
         match object {
             Some(DataType::Instance(instance)) => {
                 instance.set(&expr.name, value.clone());
-                ()
             }
             _ => return self.visitor_runtime_error(Some(&expr.name.dup()), err_msg),
         }
@@ -496,8 +469,7 @@ impl ExprVisitor for Interpreter {
                 VisitorTypes::DataType(Some(DataType::Bool(!self.is_truthy(&right))))
             }
             _ => {
-                return self
-                    .visitor_runtime_error(Some(&expr.operator), "Expected a '!' or '-' operator.")
+                self.visitor_runtime_error(Some(&expr.operator), "Expected a '!' or '-' operator.")
             }
         }
     }
@@ -563,25 +535,21 @@ impl StmtVisitor for Interpreter {
     fn visit_if_stmt(&mut self, stmt: &If) -> VisitorTypes {
         let mut potential_return: VisitorTypes = VisitorTypes::Void(());
         let condition = match stmt.condition.accept(self) {
-            VisitorTypes::DataType(d) => match d {
-                Some(s) => s,
-                None => return self.visitor_runtime_error(None, "Expected a condition."),
-            },
+            VisitorTypes::DataType(Some(d)) => d,
             _ => return self.visitor_runtime_error(None, "Expected a condition."),
         };
         if self.is_truthy(&condition) {
             potential_return = self.execute(&stmt.then_branch);
         } else if stmt.else_branch.is_some() {
-            potential_return = self.execute(&stmt.else_branch.as_ref().unwrap());
+            potential_return = self.execute(stmt.else_branch.as_ref().unwrap());
         }
         potential_return
     }
 
     fn visit_print_stmt(&mut self, stmt: &Print) -> VisitorTypes {
         let value = stmt.expression.accept(self);
-        match self.stringify(value) {
-            Ok(s) => print!("{}", s),
-            Err(_) => {}
+        if let Ok(s) = self.stringify(value) {
+            print!("{}", s);
         }
         VisitorTypes::Void(())
     }
@@ -590,9 +558,7 @@ impl StmtVisitor for Interpreter {
         if let Some(value) = stmt.value.clone() {
             match value.accept(self) {
                 VisitorTypes::String(_) => todo!(),
-                VisitorTypes::DataType(d) => {
-                    return VisitorTypes::Return(d);
-                }
+                VisitorTypes::DataType(d) => VisitorTypes::Return(d),
                 VisitorTypes::RunTimeError { token, msg } => {
                     return self.visitor_runtime_error(token.as_ref(), &msg);
                 }
@@ -600,19 +566,16 @@ impl StmtVisitor for Interpreter {
                 VisitorTypes::Void(_) => todo!(),
             }
         } else {
-            return VisitorTypes::Return(Some(DataType::Nil));
+            VisitorTypes::Return(Some(DataType::Nil))
         }
     }
 
     fn visit_var_stmt(&mut self, stmt: &Var) -> VisitorTypes {
         let mut data_type = None;
         if let Some(initializer) = &stmt.initializer {
-            data_type = match Some(initializer.accept(self)) {
-                Some(v) => match v {
-                    VisitorTypes::DataType(d) => d,
-                    _ => return self.visitor_runtime_error(Some(&stmt.name), "Expected a value."),
-                },
-                None => return self.visitor_runtime_error(Some(&stmt.name), "Expected a value."),
+            data_type = match initializer.accept(self) {
+                VisitorTypes::DataType(d) => d,
+                _ => return self.visitor_runtime_error(Some(&stmt.name), "Expected a value."),
             }
         }
         let value = match data_type {
@@ -630,18 +593,12 @@ impl StmtVisitor for Interpreter {
         let mut condition_valid = true;
         while condition_valid {
             let condition = match stmt.condition.accept(self) {
-                VisitorTypes::DataType(d) => match d {
-                    Some(s) => s,
-                    None => return self.visitor_runtime_error(None, "Expected a condition."),
-                },
+                VisitorTypes::DataType(Some(d)) => d,
                 _ => return self.visitor_runtime_error(None, "Expected a condition."),
             };
             if self.is_truthy(&condition) {
-                match self.execute(&stmt.body) {
-                    VisitorTypes::Return(v) => {
-                        return VisitorTypes::Return(v);
-                    }
-                    _ => {}
+                if let VisitorTypes::Return(v) = self.execute(&stmt.body) {
+                    return VisitorTypes::Return(v);
                 }
             } else {
                 condition_valid = false;

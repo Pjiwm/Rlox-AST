@@ -6,10 +6,9 @@ use crate::{error, run};
 
 pub fn run_file(path: &str) -> io::Result<()> {
     let src = std::fs::read_to_string(path)?;
-    // run(&src).unwrap();
     match run::run(&src, false) {
         Ok(_) => {
-            println!("{}", format!("{} {}", "SRC:".yellow(), path.green()));
+            println!("{} {}", "SRC:".yellow(), path.green());
         }
         Err(_) => {
             if error::get_error() {

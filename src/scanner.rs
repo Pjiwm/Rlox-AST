@@ -39,7 +39,7 @@ impl Scanner {
             self.line,
             self.pos,
         ));
-        return &self.tokens;
+        &self.tokens
     }
 
     /// Scans the next token.
@@ -114,7 +114,7 @@ impl Scanner {
         let token_type = KEYWORDS.get(text);
         // If the token is not a keyword it is always an identifier.
         match token_type {
-            Some(token_type) => self.add_token(token_type.clone()),
+            Some(token_type) => self.add_token(*token_type),
             None => self.add_token(TokenType::Identifier),
         }
     }

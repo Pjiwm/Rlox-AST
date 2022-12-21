@@ -53,16 +53,16 @@ fn welcome() {
     let author = env!("CARGO_PKG_AUTHORS").to_string().green();
     let green_arrow = ">>>".to_string().green();
     println!("{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}",
-    format!("================================================================================================").yellow(),
+    "================================================================================================".yellow(),
     format!("Lox Version: {version}").yellow(),
     format!("Author: {author}").yellow(),
-    format!("A Rust implementation of the Lox language from the book Crafting Interpreters by Robert Nystorm.\n").yellow(),
-    format!("Running in REPL mode. Type 'exit' to exit.").yellow(),
-    format!("Other available commands:").yellow(),
+    "A Rust implementation of the Lox language from the book Crafting Interpreters by Robert Nystorm.\n".yellow(),
+    "Running in REPL mode. Type 'exit' to exit.".yellow(),
+    "Other available commands:".yellow(),
     format!("{green_arrow} clear {}", "- Clears the terminal screen.".to_string().yellow() ),
     format!("{green_arrow} reset {}", "- Resets the input buffer.".to_string().yellow() ),
     format!("{green_arrow} exit {}", "- Exits the REPL.".to_string().yellow() ),
-    format!("================================================================================================").yellow(),);
+    "================================================================================================".yellow());
 }
 
 fn remove_last_cmd(input: &String, cmd: &str) -> String {
@@ -82,7 +82,7 @@ fn remove_print(cmd: &str) -> String {
             buffer.push(cmd.chars().nth(i).unwrap());
         }
 
-        if current.starts_with(";") {
+        if current.starts_with(';') {
             in_print = false;
         }
     }

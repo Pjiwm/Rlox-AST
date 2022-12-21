@@ -43,7 +43,7 @@ impl LoxFunction {
     pub fn bind(&self, instance: Rc<LoxInstance>) -> LoxFunction {
         let env = RefCell::new(Environment::new_enclosing(Rc::clone(&self.closure)));
         env.borrow_mut()
-            .define("this".to_string(), DataType::Instance(instance.clone()));
+            .define("this".to_string(), DataType::Instance(instance));
         LoxFunction {
             body: Rc::clone(&self.body),
             params: Rc::clone(&self.params),

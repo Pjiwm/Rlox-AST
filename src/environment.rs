@@ -36,7 +36,7 @@ impl Environment {
 
     pub fn get(&self, name: &Token) -> VisitorTypes {
         if let Some(object) = self.values.get(&name.dup().lexeme) {
-            return VisitorTypes::DataType(Some(object.clone()));
+            VisitorTypes::DataType(Some(object.clone()))
         } else if let Some(enclosing) = &self.enclosing {
             enclosing.borrow_mut().get(name)
         } else {
@@ -75,7 +75,7 @@ impl Environment {
     pub fn assign_at(&mut self, distance: usize, name: &Token, value: DataType) -> VisitorTypes {
         if distance == 0 {
             self.values.insert(name.dup().lexeme, value);
-            return VisitorTypes::Void(());
+            VisitorTypes::Void(())
         } else {
             self.enclosing
                 .as_ref()

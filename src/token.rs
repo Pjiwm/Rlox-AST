@@ -1,11 +1,11 @@
-use core::fmt::Debug;
-use std::rc::Rc;
 use strum_macros::Display;
 
 use crate::{
     class::{LoxClass, LoxInstance},
     function::{LoxFunction, LoxNative},
 };
+use core::fmt::{Debug, Display};
+use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -99,17 +99,18 @@ pub enum DataType {
     Class(LoxClass),
     Instance(Rc<LoxInstance>),
 }
-impl DataType {
-    pub fn to_string(&self) -> String {
+
+impl Display for DataType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            DataType::String(s) => s.clone(),
-            DataType::Number(n) => n.to_string(),
-            DataType::Bool(b) => b.to_string(),
-            DataType::Nil => "nil".to_string(),
-            DataType::Function(f) => format!("{f}"),
-            DataType::Native(n) => format!("{n}"),
-            DataType::Class(c) => format!("{c}"),
-            DataType::Instance(i) => format!("{i}"),
+            DataType::String(s) => write!(f, "{s}"),
+            DataType::Number(n) => write!(f, "{n}"),
+            DataType::Bool(b) => write!(f, "{b}"),
+            DataType::Nil => write!(f, "NIL"),
+            DataType::Function(fnc) => write!(f, "{fnc}"),
+            DataType::Native(n) => write!(f, "{n}"),
+            DataType::Class(c) => write!(f, "{c}"),
+            DataType::Instance(i) => write!(f, "{i}"),
         }
     }
 }

@@ -43,7 +43,7 @@ impl Println {
 
 impl LoxCallable for Println {
     fn call(&self, _: &mut Interpreter, arguments: Vec<DataType>) -> DataType {
-        println!("{}", arguments[0].to_string());
+        println!("{}", arguments[0]);
         DataType::Nil
     }
 

@@ -242,7 +242,7 @@ impl<'a> StmtVisitor for Resolver<'a> {
         self.resolve_expr(&stmt.condition);
         self.resolve_stmt(&stmt.then_branch);
         if let Some(else_branch) = &stmt.else_branch {
-            self.resolve_stmt(&else_branch);
+            self.resolve_stmt(else_branch);
         }
         VisitorTypes::Void(())
     }

@@ -1,4 +1,4 @@
-use crate::token::{Token, TokenType};
+use crate::token::Token;
 use colored::*;
 
 static mut HAD_ERROR: bool = false;
@@ -10,11 +10,7 @@ pub fn error(line: u32, pos: u32, message: &str) {
 }
 
 pub fn token_error(token: &Token, message: &str) {
-    if token.token_type == TokenType::Eof {
-        report(token.line, token.pos, message);
-    } else {
-        report(token.line, token.pos, message);
-    }
+    report(token.line, token.pos, message);
 }
 
 pub fn runtime_error(token: &Option<Token>, message: &str) {

@@ -9,7 +9,7 @@ impl AstPrinter {
     }
 
     pub fn _print(&mut self, expr: Rc<dyn Expr>) -> String {
-        let return_string = match expr.accept(self) {
+        match expr.accept(self) {
             VisitorTypes::String(s) => s,
             VisitorTypes::DataType(_) => "Incorrect expression".to_string(),
             VisitorTypes::Return(_) => "Incorrect expression".to_string(),
@@ -17,16 +17,15 @@ impl AstPrinter {
                 "Ran into Run time error: Incorrect expression".to_string()
             }
             VisitorTypes::Void(_) => "Void".to_string(),
-        };
-        return_string
+        }
     }
 
-    fn parenthesize(&mut self, name: &String, exprs: Vec<&dyn Expr>) -> VisitorTypes {
+    fn parenthesize(&mut self, name: &str, exprs: Vec<&dyn Expr>) -> VisitorTypes {
         let mut s = String::new();
-        s.push_str("(");
+        s.push('(');
         s.push_str(name);
         for expr in exprs {
-            s.push_str(" ");
+            s.push(' ');
             let expr_str = match expr.accept(self) {
                 VisitorTypes::String(s) => s,
                 VisitorTypes::DataType(_) => "Incorrect expression".to_string(),
@@ -38,7 +37,7 @@ impl AstPrinter {
             };
             s.push_str(expr_str.as_str());
         }
-        s.push_str(")");
+        s.push(')');
         VisitorTypes::String(s)
     }
 }
@@ -64,7 +63,7 @@ impl ExprVisitor for AstPrinter {
 
     fn visit_grouping_expr(&mut self, expr: &Grouping) -> VisitorTypes {
         let expressions = vec![expr.expression.as_ref()];
-        self.parenthesize(&"group".to_owned(), expressions)
+        self.parenthesize("group", expressions)
     }
 
     fn visit_literal_expr(&mut self, expr: &Literal) -> VisitorTypes {
